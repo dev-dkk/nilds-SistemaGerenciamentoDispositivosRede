@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Network Asset Manager - Alertas</title>
+    <link rel="stylesheet" href="src/style.css">
+    </head>
+<body>
+    <div class="container">
+        <aside class="sidebar">
+            <h2>NILDS</h2>
+            <nav>
+                <ul>
+                    <li><a href="index.html">Dashboard</a></li>
+                    <li><a href="dispositivos.html">Dispositivos</a></li>
+                    <li><a href="alertas.html" class="active">Alertas</a></li>
+                    <li><a href="relatorio.html">Relatórios</a></li>
+                    <li><a href="config.html">Configurações</a></li>
+                </ul>
+            </nav>
+        </aside>
+        <main class="content">
+            <header>
+                <h1>Alertas</h1>
+                <div class="actions">
+                    <select id="filter-severity">
+                        <option value="">Filtrar por Severidade</option>
+                        <option value="critical">Crítico</option>
+                        <option value="high">Alto</option>
+                        <option value="medium">Médio</option>
+                        <option value="low">Baixo</option>
+                    </select>
+                    <select id="filter-status">
+                        <option value="">Filtrar por Status</option>
+                        <option value="new">Novo</option>
+                        <option value="read">Lido</option>
+                        <option value="resolved">Resolvido</option>
+                    </select>
+                    <button class="btn-secondary">Marcar Selecionados como Lidos</button>
+                </div>
+            </header>
+
+            <section class="alerts-list">
+                <div class="alert-item alert-critical">
+                    <div class="alert-icon">❗</div>
+                    <div class="alert-details">
+                        <h4><input type="checkbox" class="alert-select"> Dispositivo Crítico Offline</h4>
+                        <p>O servidor 'SRV-DBMASTER-01' (192.168.1.5) está offline há mais de 10 minutos.</p>
+                        <small>22/05/2025 10:15 - Severidade: Crítica - Status: Novo</small>
+                    </div>
+                    <div class="alert-actions">
+                        <a href="#" class="action-link">Detalhes</a>
+                        <a href="#" class="action-link">Resolver</a>
+                    </div>
+                </div>
+
+                <div class="alert-item alert-high">
+                    <div class="alert-icon">⚠️</div>
+                    <div class="alert-details">
+                        <h4><input type="checkbox" class="alert-select"> Novo Dispositivo Detectado (IP Desconhecido)</h4>
+                        <p>Um novo dispositivo com IP 192.168.1.112 foi detectado na rede da Contabilidade.</p>
+                        <small>22/05/2025 09:30 - Severidade: Alta - Status: Novo</small>
+                    </div>
+                    <div class="alert-actions">
+                        <a href="#" class="action-link">Investigar</a>
+                        <a href="#" class="action-link">Adicionar ao Inventário</a>
+                    </div>
+                </div>
+
+                <div class="alert-item alert-medium">
+                    <div class="alert-icon">➡️</div>
+                    <div class="alert-details">
+                        <h4><input type="checkbox" class="alert-select"> Conflito de IP</h4>
+                        <p>Detectado possível conflito de IP para 192.168.1.25. Dispositivos envolvidos: PC-JOAO, PRINTER-XYZ.</p>
+                        <small>21/05/2025 17:00 - Severidade: Média - Status: Lido</small>
+                    </div>
+                    <div class="alert-actions">
+                        <a href="#" class="action-link">Detalhes</a>
+                    </div>
+                </div>
+
+                 <div class="alert-item alert-low">
+                    <div class="alert-icon">ℹ️</div>
+                    <div class="alert-details">
+                        <h4><input type="checkbox" class="alert-select"> Licença de Software Expirando</h4>
+                        <p>A licença do software 'Antivirus Corp' no dispositivo 'PC-FINAN-03' expira em 7 dias.</p>
+                        <small>20/05/2025 11:00 - Severidade: Baixa - Status: Resolvido</small>
+                    </div>
+                    <div class="alert-actions">
+                        <a href="#" class="action-link">Ver Detalhes</a>
+                    </div>
+                </div>
+            </section>
+            </main>
+    </div>
+</body>
+</html>

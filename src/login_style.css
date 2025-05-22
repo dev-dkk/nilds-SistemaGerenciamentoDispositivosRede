@@ -1,0 +1,107 @@
+/* login_style.css - Estilos específicos para a página de login */
+
+body.login-page-body {
+    background-color: #f0f2f5; /* Mesmo cinza claro do fundo do app */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    margin: 0;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; /* Fonte do style.css */
+}
+
+.login-container { /* Container para centralizar tudo */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 100%;
+    height: 100vh; /* Opcional, já que o body tem min-height */
+}
+
+.login-box {
+    background-color: #ffffff;
+    padding: 35px 45px; /* Aumentei um pouco o padding */
+    border-radius: 8px;
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.1); /* Sombra um pouco mais pronunciada */
+    width: 100%;
+    max-width: 420px; /* Largura máxima da caixa de login */
+    text-align: center;
+}
+
+.login-box h2 { /* Sigla NAM */
+    color: #3498db; /* Cor primária do style.css */
+    font-size: 40px; /* Tamanho da sigla */
+    font-weight: 700;
+    margin-bottom: 8px;
+}
+
+.login-box h3 { /* Nome completo do app */
+    color: #555;
+    font-size: 17px;
+    margin-bottom: 35px; /* Espaçamento antes do formulário */
+    font-weight: 400;
+}
+
+.input-group {
+    margin-bottom: 22px; /* Mais espaço entre os campos */
+    text-align: left;
+}
+
+.input-group label {
+    display: block;
+    margin-bottom: 8px;
+    color: #333;
+    font-size: 14px;
+    font-weight: 500;
+}
+
+.input-group input[type="text"],
+.input-group input[type="password"] {
+    width: 100%;
+    padding: 13px 16px; /* Inputs um pouco maiores */
+    border: 1px solid #d1d1d1; /* Borda um pouco mais suave */
+    border-radius: 5px;
+    font-size: 15px;
+    box-sizing: border-box;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.input-group input[type="text"]:focus,
+.input-group input[type="password"]:focus {
+    border-color: #3498db; /* Cor primária no foco */
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.15); /* Sombra de foco suave */
+}
+
+.btn-login { /* Reutiliza o estilo do .btn-primary do style.css se existir ou define aqui */
+    width: 100%;
+    padding: 13px 15px;
+    background-color: #3498db; /* Cor primária */
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 16px;
+    font-weight: 600;
+    transition: background-color 0.2s ease;
+    margin-top: 10px; /* Espaço acima do botão */
+}
+
+.btn-login:hover {
+    background-color: #2980b9; /* Tom mais escuro no hover */
+}
+
+.login-links {
+    margin-top: 25px;
+    font-size: 13px;
+}
+
+.login-links a {
+    color: #3498db; /* Cor primária */
+    text-decoration: none;
+    margin: 0 5px; /* Espaçamento se houver mais links */
+}
+
+.login-links a:hover {
+    text-decoration: underline;
+}

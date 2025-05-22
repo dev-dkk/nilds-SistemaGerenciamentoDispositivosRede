@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Network Asset Manager - Configurações</title>
+    <link rel="stylesheet" href="src/style.css">
+</head>
+<body>
+    <div class="container">
+        <aside class="sidebar">
+            <h2>NILDS</h2>
+            <nav>
+                <ul>
+                    <li><a href="index.html">Dashboard</a></li>
+                    <li><a href="dispositivos.html">Dispositivos</a></li>
+                    <li><a href="alertas.html">Alertas</a></li>
+                    <li><a href="relatorio.html">Relatórios</a></li>
+                    <li><a href="config.html" class="active">Configurações</a></li>
+                </ul>
+            </nav>
+        </aside>
+        <main class="content">
+            <header>
+                <h1>Configurações</h1>
+            </header>
+
+            <div class="tabs-container">
+                <div class="tab-buttons">
+                    <button class="tab-button active" onclick="openTab(event, 'tab-geral')">Geral</button>
+                    <button class="tab-button" onclick="openTab(event, 'tab-varredura')">Varredura de Rede</button>
+                    <button class="tab-button" onclick="openTab(event, 'tab-alertas')">Alertas e Notificações</button>
+                    <button class="tab-button" onclick="openTab(event, 'tab-usuarios')">Usuários</button>
+                    <button class="tab-button" onclick="openTab(event, 'tab-sobre')">Sobre</button>
+                </div>
+
+                <div id="tab-geral" class="tab-content active card-style">
+                    <h3>Configurações Gerais</h3>
+                    <form class="settings-form">
+                        <div class="form-group">
+                            <label for="org-name">Nome da Organização:</label>
+                            <input type="text" id="org-name" name="org-name" value="Minha Empresa TI">
+                        </div>
+                        <div class="form-group">
+                            <label for="timezone">Fuso Horário:</label>
+                            <select id="timezone" name="timezone">
+                                <option value="America/Sao_Paulo">(GMT-03:00) Sao Paulo</option>
+                                <option value="America/New_York">(GMT-05:00) Nova York</option>
+                                </select>
+                        </div>
+                         <div class="form-group">
+                            <label for="language">Idioma do Sistema:</label>
+                            <select id="language" name="language">
+                                <option value="pt-BR">Português (Brasil)</option>
+                                <option value="en-US">English (US)</option>
+                            </select>
+                        </div>
+                        <button type="submit" class="btn-primary">Salvar Configurações Gerais</button>
+                    </form>
+                </div>
+
+                <div id="tab-varredura" class="tab-content card-style">
+                    <h3>Configurações de Varredura de Rede</h3>
+                    <form class="settings-form">
+                        <div class="form-group">
+                            <label for="ip-ranges">Faixas de IP para Varredura (separadas por vírgula):</label>
+                            <input type="text" id="ip-ranges" name="ip-ranges" value="192.168.1.0/24, 10.0.0.0/8">
+                        </div>
+                        <div class="form-group">
+                            <label for="scan-frequency">Frequência da Varredura:</label>
+                            <select id="scan-frequency" name="scan-frequency">
+                                <option value="30min">A cada 30 minutos</option>
+                                <option value="1hr">A cada 1 hora</option>
+                                <option value="daily">Diariamente às 02:00</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="discovery-method">Método de Descoberta:</label>
+                            <select id="discovery-method" name="discovery-method">
+                                <option value="ping_arp">Ping + ARP</option>
+                                <option value="snmp">SNMP (se disponível)</option>
+                                <option value="nmap">Varredura Nmap (Avançado)</option>
+                            </select>
+                        </div>
+                        <button type="submit" class="btn-primary">Salvar Configurações de Varredura</button>
+                    </form>
+                </div>
+
+                <div id="tab-alertas" class="tab-content card-style">
+                    <h3>Configurações de Alertas e Notificações</h3>
+                    <form class="settings-form">
+                        <div class="form-group">
+                            <label for="notification-email">E-mail para Notificações:</label>
+                            <input type="email" id="notification-email" name="notification-email" value="admin@minhaempresa.com">
+                        </div>
+                        <p><strong>Notificar sobre:</strong></p>
+                        <div class="checkbox-group">
+                            <input type="checkbox" id="alert-new-device" name="alert-new-device" checked> <label for="alert-new-device">Novos dispositivos detectados</label>
+                        </div>
+                        <div class="checkbox-group">
+                            <input type="checkbox" id="alert-offline-device" name="alert-offline-device" checked> <label for="alert-offline-device">Dispositivos críticos offline</label>
+                        </div>
+                         <div class="checkbox-group">
+                            <input type="checkbox" id="alert-ip-conflict" name="alert-ip-conflict"> <label for="alert-ip-conflict">Conflitos de IP</label>
+                        </div>
+                        <button type="submit" class="btn-primary">Salvar Configurações de Alertas</button>
+                    </form>
+                </div>
+
+                <div id="tab-usuarios" class="tab-content card-style">
+                    <h3>Gerenciamento de Usuários</h3>
+                    <p>O gerenciamento de usuários e perfis permite controlar quem tem acesso ao sistema e o que cada um pode fazer.</p>
+                    <button type="button" class="btn-primary" onclick="alert('Redirecionando para gerenciamento de usuários...')">Gerenciar Usuários e Perfis</button>
+                    </div>
+                
+                <div id="tab-sobre" class="tab-content card-style">
+                    <h3>Sobre o Network Asset Manager</h3>
+                    <p><strong>Versão:</strong> 1.0.0 (Protótipo)</p>
+                    <p><strong>Desenvolvido por:</strong> DK Developer Enterprise</p>
+                    <p>Este sistema ajuda a inventariar e monitorar dispositivos conectados à rede.</p>
+                    <p><a href="#" class="action-link">Documentação</a> | <a href="#" class="action-link">Verificar Atualizações</a></p>
+                </div>
+
+            </div>
+        </main>
+    </div>
+
+<script>
+function openTab(evt, tabName) {
+  var i, tabcontent, tabbuttons;
+  tabcontent = document.getElementsByClassName("tab-content");
+  for (i = 0; i < tabcontent.length; i++) {
+    tabcontent[i].style.display = "none";
+    tabcontent[i].classList.remove("active");
+  }
+  tabbuttons = document.getElementsByClassName("tab-button");
+  for (i = 0; i < tabbuttons.length; i++) {
+    tabbuttons[i].classList.remove("active");
+  }
+  document.getElementById(tabName).style.display = "block";
+  document.getElementById(tabName).classList.add("active");
+  evt.currentTarget.classList.add("active");
+}
+
+// Para garantir que a primeira aba seja exibida ao carregar
+document.addEventListener('DOMContentLoaded', function() {
+    document.querySelector('.tab-button.active').click();
+});
+</script>
+</body>
+</html>

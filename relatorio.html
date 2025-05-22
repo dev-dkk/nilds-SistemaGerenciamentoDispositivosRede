@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Network Asset Manager - Relatórios</title>
+    <link rel="stylesheet" href="src/style.css">
+</head>
+<body>
+    <div class="container">
+        <aside class="sidebar">
+            <h2>NILDS</h2>
+            <nav>
+                <ul>
+                    <li><a href="index.html">Dashboard</a></li>
+                    <li><a href="dispositivos.html">Dispositivos</a></li>
+                    <li><a href="alertas.html">Alertas</a></li>
+                    <li><a href="relatorio.html" class="active">Relatórios</a></li>
+                    <li><a href="config.html">Configurações</a></li>
+                </ul>
+            </nav>
+        </aside>
+        <main class="content">
+            <header>
+                <h1>Relatórios</h1>
+            </header>
+
+            <section class="report-generator card-style"> <h3>Gerar Novo Relatório</h3>
+                <form class="form-inline">
+                    <div class="form-group">
+                        <label for="report-type">Tipo de Relatório:</label>
+                        <select id="report-type" name="report-type">
+                            <option value="inventory_full">Inventário Completo de Dispositivos</option>
+                            <option value="devices_by_os">Dispositivos por Sistema Operacional</option>
+                            <option value="offline_devices">Dispositivos Offline Recentemente</option>
+                            <option value="alert_history">Histórico de Alertas</option>
+                            <option value="software_list">Lista de Software por Dispositivo</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="date-range-start">Período De:</label>
+                        <input type="date" id="date-range-start" name="date-range-start">
+                    </div>
+                    <div class="form-group">
+                        <label for="date-range-end">Até:</label>
+                        <input type="date" id="date-range-end" name="date-range-end">
+                    </div>
+                    <div class="form-group">
+                        <label for="report-format">Formato:</label>
+                        <select id="report-format" name="report-format">
+                            <option value="pdf">PDF</option>
+                            <option value="csv">CSV</option>
+                            <option value="xlsx">Excel (XLSX)</option>
+                        </select>
+                    </div>
+                    <button type="submit" class="btn-primary">Gerar Relatório</button>
+                </form>
+            </section>
+
+            <section class="recent-reports card-style">
+                <h3>Relatórios Gerados Recentemente</h3>
+                <table class="basic-table"> <thead>
+                        <tr>
+                            <th>Nome do Relatório</th>
+                            <th>Data de Geração</th>
+                            <th>Tipo</th>
+                            <th>Formato</th>
+                            <th>Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>Inventário Completo - Maio 2025</td>
+                            <td>22/05/2025 10:30</td>
+                            <td>Inventário Completo</td>
+                            <td>PDF</td>
+                            <td><a href="#" class="action-link">Download</a> <a href="#" class="action-link">Visualizar</a></td>
+                        </tr>
+                        <tr>
+                            <td>Dispositivos Offline (Últimos 7 dias)</td>
+                            <td>21/05/2025 15:00</td>
+                            <td>Dispositivos Offline</td>
+                            <td>CSV</td>
+                            <td><a href="#" class="action-link">Download</a></td>
+                        </tr>
+                        <tr>
+                            <td>Alertas Críticos - Abril 2025</td>
+                            <td>01/05/2025 09:00</td>
+                            <td>Histórico de Alertas</td>
+                            <td>PDF</td>
+                            <td><a href="#" class="action-link">Download</a> <a href="#" class="action-link">Visualizar</a></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </section>
+        </main>
+    </div>
+</body>
+</html>

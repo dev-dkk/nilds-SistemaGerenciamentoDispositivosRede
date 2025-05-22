@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Network Asset Manager - Dispositivos</title>
+    <link rel="stylesheet" href="src/style.css">
+</head>
+<body>
+    <div class="container">
+        <aside class="sidebar">
+            <h2>NILDS</h2>
+            <nav>
+                <ul>
+                    <li><a href="index.html">Dashboard</a></li>
+                    <li><a href="dispositivos.html" class="active">Dispositivos</a></li>
+                    <li><a href="alertas.html">Alertas</a></li>
+                    <li><a href="relatorio.html">Relatórios</a></li>
+                    <li><a href="config.html">Configurações</a></li>
+                </ul>
+            </nav>
+        </aside>
+        <main class="content">
+            <header>
+                <h1>Lista de Dispositivos</h1>
+                <div class="actions">
+                    <input type="text" placeholder="Buscar dispositivos...">
+                    <button class="btn-primary">Adicionar Dispositivo</button>
+                </div>
+            </header>
+            <section class="device-table-section">
+                <table>
+                    <thead>
+                        <tr>
+                            <th><input type="checkbox" id="select-all"></th>
+                            <th>Nome do Host</th>
+                            <th>Endereço IP</th>
+                            <th>MAC Address</th>
+                            <th>Sistema Operacional</th>
+                            <th>Fabricante</th>
+                            <th>Status</th>
+                            <th>Última Verificação</th>
+                            <th>Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><input type="checkbox" class="row-select"></td>
+                            <td>SRV-DC01</td>
+                            <td>192.168.1.10</td>
+                            <td>00:1A:2B:3C:4D:5E</td>
+                            <td>Windows Server 2019</td>
+                            <td>Dell Inc.</td>
+                            <td class="status-online">Online</td>
+                            <td>21/05/2025 19:30</td>
+                            <td><a href="#" class="action-link">Detalhes</a> <a href="#" class="action-link">Editar</a></td>
+                        </tr>
+                        <tr>
+                            <td><input type="checkbox" class="row-select"></td>
+                            <td>PC-FINANCE-01</td>
+                            <td>192.168.1.55</td>
+                            <td>00:AA:BB:CC:DD:EE</td>
+                            <td>Windows 10 Pro</td>
+                            <td>HP</td>
+                            <td class="status-online">Online</td>
+                            <td>21/05/2025 19:32</td>
+                            <td><a href="#" class="action-link">Detalhes</a> <a href="#" class="action-link">Editar</a></td>
+                        </tr>
+                        <tr>
+                            <td><input type="checkbox" class="row-select"></td>
+                            <td>PRINTER-CORP</td>
+                            <td>192.168.1.200</td>
+                            <td>11:22:33:44:55:66</td>
+                            <td>Printer OS</td>
+                            <td>Brother</td>
+                            <td class="status-offline">Offline</td>
+                            <td>21/05/2025 18:55</td>
+                            <td><a href="#" class="action-link">Detalhes</a> <a href="#" class="action-link">Editar</a></td>
+                        </tr>
+                        <tr>
+                            <td><input type="checkbox" class="row-select"></td>
+                            <td>AP-WIFI-01</td>
+                            <td>192.168.1.254</td>
+                            <td>A1:B2:C3:D4:E5:F6</td>
+                            <td>RouterOS</td>
+                            <td>MikroTik</td>
+                            <td class="status-online">Online</td>
+                            <td>21/05/2025 19:31</td>
+                            <td><a href="#" class="action-link">Detalhes</a> <a href="#" class="action-link">Editar</a></td>
+                        </tr>
+                        <tr>
+                            <td><input type="checkbox" class="row-select"></td>
+                            <td>Mobile-UserX</td>
+                            <td>192.168.1.132</td>
+                            <td>FF:EE:DD:CC:BB:AA</td>
+                            <td>Android 13</td>
+                            <td>Samsung</td>
+                            <td class="status-online">Online</td>
+                            <td>21/05/2025 19:28</td>
+                            <td><a href="#" class="action-link">Detalhes</a> <a href="#" class="action-link">Editar</a></td>
+                        </tr>
+                         <tr>
+                            <td><input type="checkbox" class="row-select"></td>
+                            <td>DESKTOP-DEV05</td>
+                            <td>192.168.1.78</td>
+                            <td>B2:C3:D4:E5:F6:A1</td>
+                            <td>Linux (Ubuntu 22.04)</td>
+                            <td>Lenovo</td>
+                            <td class="status-online">Online</td>
+                            <td>21/05/2025 19:33</td>
+                            <td><a href="#" class="action-link">Detalhes</a> <a href="#" class="action-link">Editar</a></td>
+                        </tr>
+                        <tr>
+                            <td><input type="checkbox" class="row-select"></td>
+                            <td>SRV-FILES</td>
+                            <td>192.168.1.15</td>
+                            <td>C3:D4:E5:F6:A1:B2</td>
+                            <td>Windows Server 2022</td>
+                            <td>Supermicro</td>
+                            <td class="status-warning">Lento</td>
+                            <td>21/05/2025 19:30</td>
+                            <td><a href="#" class="action-link">Detalhes</a> <a href="#" class="action-link">Editar</a></td>
+                        </tr>
+                    </tbody>
+                </table>
+                <div class="table-footer">
+                    <span>Exibindo 1-7 de 125 dispositivos</span>
+                    <div class="pagination">
+                        <a href="#" class="page-link">&laquo; Anterior</a>
+                        <a href="#" class="page-link active">1</a>
+                        <a href="#" class="page-link">2</a>
+                        <a href="#" class="page-link">3</a>
+                        <a href="#" class="page-link">...</a>
+                        <a href="#" class="page-link">18</a>
+                        <a href="#" class="page-link">Próximo &raquo;</a>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+</body>
+</html>
