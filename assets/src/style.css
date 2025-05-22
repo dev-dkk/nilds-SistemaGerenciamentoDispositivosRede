@@ -30,13 +30,18 @@ body {
     left: 0;
     top: 0;
 }
-
-.sidebar h2 {
+.sidebar .side-bar-logo-container{
     text-align: center;
-    margin-bottom: 25px;
-    font-size: 28px;
-    font-weight: 600;
-    color: #3498db; /* NAM title color */
+    padding: 15px;
+    margin-bottom: 15px;
+    background-color: #8ebbe8;
+    border-radius: 100%;
+}
+
+.sidebar .side-bar-logo-container img{
+    max-width: 70%;
+    height: auto;
+    max-height: 50px;
 }
 
 .sidebar nav ul {

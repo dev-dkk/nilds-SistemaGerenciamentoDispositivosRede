@@ -27,12 +27,19 @@ body.login-page-body {
     max-width: 420px; /* Largura máxima da caixa de login */
     text-align: center;
 }
+.login-box .container-logo-login{
+    text-align: center;
+    padding: 15px;
+    margin-bottom: 15px;
+    background-color: #8ebbe8;
+    border-radius: 100%;
+}
+.login-box .login-logo{
+    max-width: 180px;
+    height: auto;
+    margin-bottom: 10px;
 
-.login-box h2 { /* Sigla NAM */
-    color: #3498db; /* Cor primária do style.css */
-    font-size: 40px; /* Tamanho da sigla */
-    font-weight: 700;
-    margin-bottom: 8px;
+
 }
 
 .login-box h3 { /* Nome completo do app */
