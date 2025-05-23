@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Esqueceu a Senha - NILDS</title>
+    <link rel="stylesheet" href="../assets/src/css/style.css"> 
+    <link rel="stylesheet" href="../assets/src/css/login_style.css"> 
+</head>
+<body class="login-page-body"> <div class="login-container">
+        <div class="login-box" id="forgot-password-box"> <img src="../assets/images/logo.png" alt="Logo NILDS Esqueceu Senha" class="login-logo">
+            <h3>Redefinir Senha</h3>
+            <p class="instruction-text">
+                Digite o endereço de e-mail associado à sua conta e enviaremos um link para você redefinir sua senha.
+            </p>
+            
+            <div id="forgot-password-message" class="login-message-placeholder"></div>
+            
+            <form id="forgotPasswordForm">
+                <div class="input-group">
+                    <label for="email">Seu Endereço de E-mail</label>
+                    <input type="email" id="email" name="email" placeholder="exemplo@dominio.com" required>
+                </div>
+                <button type="submit" class="btn-login">Enviar Link de Redefinição</button>
+            </form>
+            
+            <div class="login-links">
+                <a href="login.html">Lembrou a senha? Voltar para o Login</a>
+            </div>
+        </div>
+    </div>
+
+    <script src="../assets/src/js/esqueceusenha.js"></script>
+</body>
+</html>

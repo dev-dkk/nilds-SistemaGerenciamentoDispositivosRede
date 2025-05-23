@@ -131,3 +131,11 @@ body.login-page-body {
     color: #155724;
     border: 1px solid #c3e6cb;
 }
+/*Texto de instrução*/
+.login-box .instruction-text {
+    font-size: 14px;
+    color: #55575a; /* Um cinza um pouco mais escuro para o texto */
+    margin-bottom: 20px;
+    line-height: 1.6; /* Melhora a legibilidade */
+    text-align: left; /* Alinhar texto à esquerda para melhor leitura */
+}
