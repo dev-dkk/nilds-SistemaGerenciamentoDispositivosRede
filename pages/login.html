@@ -4,13 +4,15 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Login - Network Asset Manager</title>
-    <link rel="stylesheet" href="../assets/src/style.css">       <link rel="stylesheet" href="../assets/src/login_style.css"> </head>
+    <link rel="stylesheet" href="../assets/src/css/style.css">       <link rel="stylesheet" href="../assets/src//css/login_style.css"> </head>
 <body class="login-page-body">
     <div class="login-container">
         <div class="login-box">
                 <img src="../assets/images/logo.png" alt="Logo NILDS Login" class="login-logo">
             <h3>Sistema de Gerenciamento de Dispositivos em Rede</h3>
-            <form action="index.html" method="POST"> <div class="input-group">
+           <div id="login-message" class="login-message-placeholder"></div> 
+            <form id="loginForm" method="POST"> 
+                <div class="input-group">
                     <label for="username">Usuário ou Email</label>
                     <input type="text" id="username" name="username" required>
                 </div>
@@ -21,9 +23,10 @@
                 <button type="submit" class="btn-login">Entrar</button>
                 <div class="login-links">
                     <a href="#">Esqueceu a senha?</a>
-                    </div>
+                </div>
             </form>
         </div>
     </div>
+    <script src="../assets/src/js/login.js"></script>
 </body>
 </html>
