@@ -45,84 +45,8 @@
                             <th>Ações</th>
                         </tr>
                     </thead>
-                    <tbody>
-                        <tr>
-                            <td><input type="checkbox" class="row-select"></td>
-                            <td>SRV-DC01</td>
-                            <td>192.168.1.10</td>
-                            <td>00:1A:2B:3C:4D:5E</td>
-                            <td>Windows Server 2019</td>
-                            <td>Dell Inc.</td>
-                            <td class="status-online">Online</td>
-                            <td>21/05/2025 19:30</td>
-                            <td><a href="#" class="action-link">Detalhes</a> <a href="#" class="action-link">Editar</a></td>
-                        </tr>
-                        <tr>
-                            <td><input type="checkbox" class="row-select"></td>
-                            <td>PC-FINANCE-01</td>
-                            <td>192.168.1.55</td>
-                            <td>00:AA:BB:CC:DD:EE</td>
-                            <td>Windows 10 Pro</td>
-                            <td>HP</td>
-                            <td class="status-online">Online</td>
-                            <td>21/05/2025 19:32</td>
-                            <td><a href="#" class="action-link">Detalhes</a> <a href="#" class="action-link">Editar</a></td>
-                        </tr>
-                        <tr>
-                            <td><input type="checkbox" class="row-select"></td>
-                            <td>PRINTER-CORP</td>
-                            <td>192.168.1.200</td>
-                            <td>11:22:33:44:55:66</td>
-                            <td>Printer OS</td>
-                            <td>Brother</td>
-                            <td class="status-offline">Offline</td>
-                            <td>21/05/2025 18:55</td>
-                            <td><a href="#" class="action-link">Detalhes</a> <a href="#" class="action-link">Editar</a></td>
-                        </tr>
-                        <tr>
-                            <td><input type="checkbox" class="row-select"></td>
-                            <td>AP-WIFI-01</td>
-                            <td>192.168.1.254</td>
-                            <td>A1:B2:C3:D4:E5:F6</td>
-                            <td>RouterOS</td>
-                            <td>MikroTik</td>
-                            <td class="status-online">Online</td>
-                            <td>21/05/2025 19:31</td>
-                            <td><a href="#" class="action-link">Detalhes</a> <a href="#" class="action-link">Editar</a></td>
-                        </tr>
-                        <tr>
-                            <td><input type="checkbox" class="row-select"></td>
-                            <td>Mobile-UserX</td>
-                            <td>192.168.1.132</td>
-                            <td>FF:EE:DD:CC:BB:AA</td>
-                            <td>Android 13</td>
-                            <td>Samsung</td>
-                            <td class="status-online">Online</td>
-                            <td>21/05/2025 19:28</td>
-                            <td><a href="#" class="action-link">Detalhes</a> <a href="#" class="action-link">Editar</a></td>
-                        </tr>
-                         <tr>
-                            <td><input type="checkbox" class="row-select"></td>
-                            <td>DESKTOP-DEV05</td>
-                            <td>192.168.1.78</td>
-                            <td>B2:C3:D4:E5:F6:A1</td>
-                            <td>Linux (Ubuntu 22.04)</td>
-                            <td>Lenovo</td>
-                            <td class="status-online">Online</td>
-                            <td>21/05/2025 19:33</td>
-                            <td><a href="#" class="action-link">Detalhes</a> <a href="#" class="action-link">Editar</a></td>
-                        </tr>
-                        <tr>
-                            <td><input type="checkbox" class="row-select"></td>
-                            <td>SRV-FILES</td>
-                            <td>192.168.1.15</td>
-                            <td>C3:D4:E5:F6:A1:B2</td>
-                            <td>Windows Server 2022</td>
-                            <td>Supermicro</td>
-                            <td class="status-warning">Lento</td>
-                            <td>21/05/2025 19:30</td>
-                            <td><a href="#" class="action-link">Detalhes</a> <a href="#" class="action-link">Editar</a></td>
-                        </tr>
+                    <tbody id="device-list-tbody">
+                        
                     </tbody>
                 </table>
                 <div class="table-footer">
@@ -139,6 +63,137 @@
                 </div>
             </section>
         </main>
+<div id="addDeviceModal" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <span class="close-button" onclick="document.getElementById('addDeviceModal').style.display='none'">&times;</span>
+            <h2>Adicionar Novo Dispositivo</h2>
+        </div>
+        <div class="modal-body">
+            <form id="addDeviceForm">
+                <div class="form-group">
+                    <label for="add-nomeHost">Nome do Host:</label>
+                    <input type="text" id="add-nomeHost" name="NomeHost" required>
+                </div>
+                <div class="form-group">
+                    <label for="add-descricao">Descrição:</label>
+                    <textarea id="add-descricao" name="Descricao"></textarea>
+                </div>
+                <div class="form-group">
+                    <label for="add-modelo">Modelo:</label>
+                    <input type="text" id="add-modelo" name="Modelo">
+                </div>
+                <div class="form-group">
+                    <label for="add-fabricante">Fabricante:</label>
+                    <select id="add-fabricante" name="ID_Fabricante">
+                        <option value="">Selecione...</option>
+                        </select>
+                </div>
+                <div class="form-group">
+                    <label for="add-so">Sistema Operacional:</label>
+                    <select id="add-so" name="ID_SistemaOperacional">
+                        <option value="">Selecione...</option>
+                        </select>
+                </div>
+                <div class="form-group">
+                    <label for="add-tipoDispositivo">Tipo de Dispositivo:</label>
+                    <select id="add-tipoDispositivo" name="ID_TipoDispositivo">
+                        <option value="">Selecione...</option>
+                        </select>
+                </div>
+                <div class="form-group">
+                    <label for="add-statusAtual">Status Atual:</label>
+                    <select id="add-statusAtual" name="StatusAtual" required>
+                        <option value="Online">Online</option>
+                        <option value="Offline">Offline</option>
+                        <option value="Com Falha">Com Falha</option>
+                        <option value="Em Manutenção">Em Manutenção</option>
+                        <option value="Desconhecido">Desconhecido</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="add-localizacao">Localização Física:</label>
+                    <input type="text" id="add-localizacao" name="LocalizacaoFisica">
+                </div>
+                <div class="form-group">
+                    <label for="add-observacoes">Observações:</label>
+                    <textarea id="add-observacoes" name="Observacoes"></textarea>
+                </div>
+                <div id="add-device-message" class="form-message-placeholder"></div>
+            </form>
+        </div>
+        <div class="modal-footer">
+            <button type="submit" form="addDeviceForm" class="btn-primary">Salvar Dispositivo</button>
+            <button type="button" class="btn-secondary" onclick="document.getElementById('addDeviceModal').style.display='none'">Cancelar</button>
+        </div>
     </div>
+</div>
+<div id="editDeviceModal" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <span class="close-button" id="closeEditModalButton">&times;</span>
+            <h2>Editar Dispositivo</h2>
+        </div>
+        <div class="modal-body">
+            <form id="editDeviceForm">
+                <input type="hidden" id="edit-deviceId" name="ID_Dispositivo"> <div class="form-group">
+                    <label for="edit-nomeHost">Nome do Host:</label>
+                    <input type="text" id="edit-nomeHost" name="NomeHost" required>
+                </div>
+                <div class="form-group">
+                    <label for="edit-descricao">Descrição:</label>
+                    <textarea id="edit-descricao" name="Descricao"></textarea>
+                </div>
+                <div class="form-group">
+                    <label for="edit-modelo">Modelo:</label>
+                    <input type="text" id="edit-modelo" name="Modelo">
+                </div>
+                <div class="form-group">
+                    <label for="edit-fabricante">Fabricante:</label>
+                    <select id="edit-fabricante" name="ID_Fabricante">
+                        <option value="">Selecione...</option>
+                        </select>
+                </div>
+                <div class="form-group">
+                    <label for="edit-so">Sistema Operacional:</label>
+                    <select id="edit-so" name="ID_SistemaOperacional">
+                        <option value="">Selecione...</option>
+                        </select>
+                </div>
+                <div class="form-group">
+                    <label for="edit-tipoDispositivo">Tipo de Dispositivo:</label>
+                    <select id="edit-tipoDispositivo" name="ID_TipoDispositivo">
+                        <option value="">Selecione...</option>
+                        </select>
+                </div>
+                <div class="form-group">
+                    <label for="edit-statusAtual">Status Atual:</label>
+                    <select id="edit-statusAtual" name="StatusAtual" required>
+                        <option value="Online">Online</option>
+                        <option value="Offline">Offline</option>
+                        <option value="Com Falha">Com Falha</option>
+                        <option value="Em Manutenção">Em Manutenção</option>
+                        <option value="Desconhecido">Desconhecido</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="edit-localizacao">Localização Física:</label>
+                    <input type="text" id="edit-localizacao" name="LocalizacaoFisica">
+                </div>
+                <div class="form-group">
+                    <label for="edit-observacoes">Observações:</label>
+                    <textarea id="edit-observacoes" name="Observacoes"></textarea>
+                </div>
+                <div id="edit-device-message" class="form-message-placeholder"></div>
+            </form>
+        </div>
+        <div class="modal-footer">
+            <button type="submit" form="editDeviceForm" class="btn-primary">Salvar Alterações</button>
+            <button type="button" class="btn-secondary" id="cancelEditModalButton">Cancelar</button>
+        </div>
+    </div>
+</div>
+    </div>
+    <script src="../assets/src/js/dispositivos.js"></script>
 </body>
 </html>
