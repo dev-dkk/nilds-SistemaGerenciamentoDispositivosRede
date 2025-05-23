@@ -27,7 +27,7 @@ def get_db_connection():
 
 @app.route('/')
 def home():
-    return "Bem-vindo ao Backend do Network Asset Manager!"
+    return "Bem-vindo ao Backend!"
 
 @app.route('/login', methods=['POST'])
 def login():
