@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Network Asset Manager - Dispositivos</title>
+    <title>NILDS - Dispositivos</title>
     <link rel="stylesheet" href="../assets/src/css/style.css">
 </head>
 <body>
@@ -26,7 +26,7 @@
             <header>
                 <h1>Lista de Dispositivos</h1>
                 <div class="actions">
-                    <input type="text" placeholder="Buscar dispositivos...">
+                    <input type="text" id="searchInput" placeholder="Buscar dispositivos...">
                     <button class="btn-primary">Adicionar Dispositivo</button>
                 </div>
             </header>
@@ -190,6 +190,20 @@
         <div class="modal-footer">
             <button type="submit" form="editDeviceForm" class="btn-primary">Salvar Alterações</button>
             <button type="button" class="btn-secondary" id="cancelEditModalButton">Cancelar</button>
+        </div>
+    </div>
+</div>
+<div id="deviceDetailsModal" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <span class="close-button" id="closeDeviceDetailsModalButton">&times;</span>
+            <h2>Detalhes do Dispositivo</h2>
+        </div>
+        <div class="modal-body" id="deviceDetailsBody">
+            <p>Carregando detalhes...</p> 
+        </div>
+        <div class="modal-footer">
+            <button type="button" class="btn-secondary" id="cancelDeviceDetailsModalButton">Fechar</button>
         </div>
     </div>
 </div>

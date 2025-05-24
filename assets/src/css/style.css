@@ -735,3 +735,43 @@ body {
     color: #155724;
     border: 1px solid #c3e6cb;
 }
+
+/* Estilos para o corpo do modal de detalhes  */
+#deviceDetailsBody {
+    font-size: 15px; /* Tamanho de fonte base para os detalhes */
+}
+
+#deviceDetailsBody h4 {
+    margin-top: 15px;
+    margin-bottom: 8px;
+    color: #2c3e50; /* Cor escura para subtítulos */
+    font-size: 17px;
+    border-bottom: 1px solid #eee;
+    padding-bottom: 5px;
+}
+#deviceDetailsBody h4:first-child {
+    margin-top: 0;
+}
+
+#deviceDetailsBody p {
+    margin-bottom: 8px;
+    line-height: 1.6;
+}
+
+#deviceDetailsBody p strong {
+    display: inline-block;
+    width: 180px; /* Ajuste conforme necessário para alinhar os rótulos */
+    color: #555;
+}
+
+#deviceDetailsBody .interface-details {
+    margin-left: 20px;
+    padding-left: 15px;
+    border-left: 2px solid #e0e0e0;
+    margin-bottom: 10px;
+}
+
+#deviceDetailsBody .interface-details p {
+    margin-bottom: 5px;
+    font-size: 14px;
+}

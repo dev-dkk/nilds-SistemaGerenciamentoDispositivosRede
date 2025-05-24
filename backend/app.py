@@ -96,9 +96,10 @@ def get_devices():
         
         cursor = conn.cursor(dictionary=True)
         
-        # Query para buscar dispositivos com informações de tabelas relacionadas
-        # Ajuste os JOINs e campos conforme sua necessidade e o que quer exibir na lista inicial
-        query = """
+        # Pega o termo de busca da query string da URL (ex: /devices?search=meu_pc)
+        search_term = request.args.get('search', None) # 'search' é o nome do parâmetro, None se não for fornecido
+
+        base_query = """
         SELECT 
             d.ID_Dispositivo, d.NomeHost, d.StatusAtual, d.DataUltimaVarredura,
             ip.EnderecoIPValor as IPPrincipal, 
@@ -107,20 +108,43 @@ def get_devices():
             fab.Nome as FabricanteNome,
             td.Nome as TipoDispositivoNome
         FROM Dispositivo d
-        LEFT JOIN InterfaceRede ifr ON d.ID_Dispositivo = ifr.ID_Dispositivo -- Assumindo uma interface principal ou a primeira
+        LEFT JOIN InterfaceRede ifr ON d.ID_Dispositivo = ifr.ID_Dispositivo 
         LEFT JOIN EnderecoIP ip ON ifr.ID_Interface = ip.ID_Interface AND ip.Principal = TRUE
         LEFT JOIN SistemaOperacional so ON d.ID_SistemaOperacional = so.ID_SistemaOperacional
         LEFT JOIN Fabricante fab ON d.ID_Fabricante = fab.ID_Fabricante
         LEFT JOIN TipoDispositivo td ON d.ID_TipoDispositivo = td.ID_TipoDispositivo
-        ORDER BY d.NomeHost ASC
         """
-        # Nota: A lógica para "interface principal" e "IP principal" pode precisar de refinamento
-        # dependendo de como você modelou isso (ex: uma flag na tabela InterfaceRede/EnderecoIP)
-        # Para simplificar, podemos pegar o primeiro IP/MAC encontrado ou um marcado como principal.
-        # Se um dispositivo pode ter múltiplas interfaces/IPs, a listagem principal
-        # geralmente mostra o "mais representativo".
+        
+        params = []
+        where_clauses = []
 
-        cursor.execute(query)
+        if search_term:
+            like_search_term = f"%{search_term}%"
+            # Adicione os campos que você quer que sejam pesquisáveis
+            # Usamos OR para que o termo possa aparecer em qualquer um dos campos
+            where_clauses.append("""
+            (d.NomeHost LIKE %s OR 
+             ip.EnderecoIPValor LIKE %s OR 
+             ifr.EnderecoMAC LIKE %s OR
+             so.Nome LIKE %s OR 
+             fab.Nome LIKE %s OR
+             td.Nome LIKE %s OR
+             d.Descricao LIKE %s OR 
+             d.Modelo LIKE %s OR
+             d.LocalizacaoFisica LIKE %s)
+            """)
+            # Adiciona o termo de busca para cada placeholder %s na cláusula WHERE
+            # O número de repetições do like_search_term deve corresponder ao número de campos no OR
+            params.extend([like_search_term] * 9) # Ajuste o número '8' se mudar a quantidade de campos no OR
+
+        if where_clauses:
+            query = base_query + " WHERE " + " AND ".join(where_clauses) # Se tiver mais filtros no futuro
+        else:
+            query = base_query
+            
+        query += " ORDER BY d.NomeHost ASC" # Mantém a ordenação
+
+        cursor.execute(query, tuple(params))
         devices = cursor.fetchall()
         
         cursor.close()
@@ -129,7 +153,9 @@ def get_devices():
         return jsonify(devices), 200
 
     except Exception as e:
-        print(f"Erro em /devices (GET): {e}")
+        print(f"Erro em /devices (GET com busca): {e}")
+        # ... (seu tratamento de erro e fechamento de conexão existente) ...
+        # Mantenha o fechamento da conexão em caso de erro
         if 'conn' in locals() and conn and conn.is_connected():
             if 'cursor' in locals() and cursor: cursor.close()
             conn.close()
@@ -429,6 +455,7 @@ def get_tipos_dispositivo():
     except Exception as e:
         print(f"Erro em /tiposdispositivo: {e}")
         return jsonify({"message": "Erro ao buscar tipos de dispositivo"}), 500
+
     
 if __name__ == '__main__':
     # O debug=True é ótimo para desenvolvimento, mas NÃO use em produção.
