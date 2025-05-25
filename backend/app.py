@@ -4,7 +4,11 @@ from flask_cors import CORS
 from dotenv import load_dotenv
 import mysql.connector
 import bcrypt
-
+import subprocess # Para executar o comando ping
+import platform   # Para identificar o sistema operacional para o comando ping
+import ipaddress  # Para trabalhar com faixas de IP
+import socket
+from concurrent.futures import ThreadPoolExecutor # Para executar pings em paralelo (opcional, mas bom para performance)
 # Carrega as variáveis de ambiente do arquivo .env
 load_dotenv()
 
@@ -24,7 +28,256 @@ def get_db_connection():
     except mysql.connector.Error as err:
         print(f"Erro ao conectar ao MySQL: {err}")
         return None
+#Executar ping e guardar IP´s descobertos
+def ping_ip(ip_str):
+    """Tenta pingar um IP e retorna True se bem-sucedido, False caso contrário."""
+    try:
+        # Determina o parâmetro de contagem e timeout com base no SO
+        if platform.system().lower() == 'windows':
+            # Para Windows: -n envia X pacotes, -w especifica timeout em milissegundos para cada resposta
+            command = ['ping', '-n', '2', '-w', '500', ip_str] # Envia 2 pacotes, espera até 500ms por resposta
+        else:
+            # Para Linux/macOS: -c envia X pacotes, -W especifica timeout em segundos para esperar por uma resposta
+            command = ['ping', '-c', '2', '-W', '1', ip_str] # Envia 2 pacotes, espera até 1s por resposta
 
+        startupinfo = None
+        if platform.system().lower() == 'windows':
+            startupinfo = subprocess.STARTUPINFO()
+            startupinfo.dwFlags |= subprocess.STARTF_USESHOWWINDOW
+            startupinfo.wShowWindow = subprocess.SW_HIDE
+        
+        # Aumentando o timeout do communicate para garantir que os pings tenham tempo
+        process = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE, startupinfo=startupinfo)
+        stdout, stderr = process.communicate(timeout=3) # Timeout total para o processo Popen de 3 segundos
+
+        # Log detalhado da saída do ping
+        stdout_decoded = stdout.decode(errors='ignore').strip()
+        stderr_decoded = stderr.decode(errors='ignore').strip()
+        print(f"Ping para {ip_str}: RC={process.returncode}")
+        if stdout_decoded:
+            print(f"  STDOUT: {stdout_decoded}")
+        if stderr_decoded:
+            print(f"  STDERR: {stderr_decoded}")
+
+        return process.returncode == 0
+    except subprocess.TimeoutExpired:
+        print(f"Timeout GERAL ao executar comando ping para {ip_str}")
+        if process: process.kill() 
+        return False
+    except Exception as e:
+        print(f"Exceção ao pingar {ip_str}: {e}")
+        return False
+
+def process_discovered_ip(ip_str):
+    """Processa um IP que respondeu ao ping: tenta resolver o hostname e insere/atualiza na tabela IPsDescobertos."""
+    conn = None
+    cursor = None
+    hostname_resolvido = None  # Inicializa como None
+
+    try:
+        # 1. Tenta resolver o hostname via Reverse DNS
+        print(f"Tentando resolver hostname para IP: {ip_str}...")
+        try:
+            # O timeout padrão para gethostbyaddr pode ser longo. 
+            # Para não bloquear demais, podemos definir um timeout global para a resolução.
+            # No entanto, socket.gethostbyaddr não aceita timeout diretamente.
+            # Uma resolução DNS lenta pode impactar o tempo total da varredura.
+            hostname_resolvido, _, _ = socket.gethostbyaddr(ip_str)
+            print(f"  Hostname resolvido para {ip_str}: {hostname_resolvido}")
+        except socket.herror: # Erro específico para "host not found", "no recovery", etc.
+            print(f"  Não foi possível resolver o hostname para {ip_str} via rDNS (socket.herror).")
+            hostname_resolvido = None
+        except Exception as e_dns: # Pega outros erros potenciais durante a resolução
+            print(f"  Erro genérico ao tentar resolver DNS para {ip_str}: {e_dns}")
+            hostname_resolvido = None
+        
+        # 2. Conecta ao banco para salvar/atualizar
+        conn = get_db_connection()
+        if not conn:
+            print(f"Não foi possível conectar ao DB para processar IP {ip_str}")
+            return
+
+        cursor = conn.cursor(dictionary=True)
+        
+        # 3. Verifica se o IP já existe na tabela IPsDescobertos
+        cursor.execute("SELECT ID_IPDescoberto FROM IPsDescobertos WHERE EnderecoIP = %s", (ip_str,))
+        existing_ip_data = cursor.fetchone()
+
+        if existing_ip_data:
+            # Se existe, atualiza DataUltimaDeteccao (automaticamente pelo DB) 
+            # e o NomeHostResolvido se tivermos um novo ou se o anterior era nulo.
+            print(f"  IP {ip_str} já existe. Atualizando NomeHostResolvido se necessário.")
+            update_query = "UPDATE IPsDescobertos SET NomeHostResolvido = %s WHERE ID_IPDescoberto = %s"
+            cursor.execute(update_query, (hostname_resolvido, existing_ip_data['ID_IPDescoberto']))
+            conn.commit()
+            print(f"  IP {ip_str} (Hostname: {hostname_resolvido or 'N/A'}) atualizado.")
+        else:
+            # Se não existe, insere como 'Novo'
+            print(f"  Novo IP detectado: {ip_str}. Inserindo no banco...")
+            insert_query = "INSERT INTO IPsDescobertos (EnderecoIP, NomeHostResolvido, StatusResolucao) VALUES (%s, %s, %s)"
+            cursor.execute(insert_query, (ip_str, hostname_resolvido, 'Novo'))
+            conn.commit()
+            print(f"  Novo IP descoberto e salvo: {ip_str} (Hostname: {hostname_resolvido or 'N/A'})")
+
+    except mysql.connector.Error as db_err:
+        print(f"Erro de DB ao processar IP {ip_str}: {db_err}")
+        if conn: conn.rollback()
+    except Exception as e:
+        print(f"Erro inesperado ao processar IP {ip_str}: {e}")
+    finally:
+        if cursor: cursor.close()
+        if conn and conn.is_connected(): conn.close()
+
+def scan_ip_range_segment(ip_list_segment):
+    """Recebe uma lista de IPs e pinga cada um, processando os que respondem."""
+    active_ips_in_segment = []
+    for ip_obj in ip_list_segment:
+        ip_str = str(ip_obj)
+        if ping_ip(ip_str):
+            active_ips_in_segment.append(ip_str)
+            process_discovered_ip(ip_str) # Processa e salva no DB
+    return active_ips_in_segment
+
+@app.route('/api/discovery/start-scan', methods=['POST'])
+def start_discovery_scan():
+    # Pega as faixas de IP do .env
+    ip_ranges_str = os.getenv('DISCOVERY_IP_RANGES', '192.168.1.1-192.168.1.20') # Default se não definido
+    
+    all_ips_to_scan = []
+    range_segments = ip_ranges_str.split(',')
+    
+    for segment in range_segments:
+        segment = segment.strip()
+        if '-' in segment: # Formato X.X.X.X-Y.Y.Y.Y ou X.X.X.X-Z (onde Z é o último octeto)
+            try:
+                start_ip_str, end_part_str = segment.split('-')
+                start_ip = ipaddress.ip_address(start_ip_str)
+                
+                if '.' in end_part_str : # é um IP completo Y.Y.Y.Y
+                    end_ip = ipaddress.ip_address(end_part_str)
+                    if start_ip.version != end_ip.version:
+                        print(f"Faixa inválida: {segment} - IPs de versões diferentes.")
+                        continue
+                    # Garante que start_ip seja menor ou igual a end_ip
+                    if start_ip > end_ip:
+                        print(f"Faixa inválida: {segment} - IP inicial maior que IP final.")
+                        continue
+                    current_ip = start_ip
+                    while current_ip <= end_ip:
+                        all_ips_to_scan.append(current_ip)
+                        current_ip += 1
+                else: # é apenas o último octeto Z
+                    end_octet = int(end_part_str)
+                    if not (0 <= end_octet <= 255):
+                         print(f"Faixa inválida: {segment} - Octeto final inválido.")
+                         continue
+                    
+                    # Constrói o IP final baseado no IP inicial
+                    # Ex: 192.168.1.1-50 -> start_ip=192.168.1.1, end_ip_addr_bytes[3]=50
+                    start_ip_addr_bytes = bytearray(start_ip.packed)
+                    if start_ip.version == 4 and len(start_ip_addr_bytes) == 4 :
+                        if end_octet < start_ip_addr_bytes[3]:
+                             print(f"Faixa inválida: {segment} - Octeto final menor que octeto inicial.")
+                             continue
+                        end_ip_addr_bytes = start_ip_addr_bytes[:]
+                        end_ip_addr_bytes[3] = end_octet
+                        end_ip = ipaddress.ip_address(bytes(end_ip_addr_bytes))
+
+                        current_ip = start_ip
+                        while current_ip <= end_ip:
+                            all_ips_to_scan.append(current_ip)
+                            if current_ip == end_ip : break # Evita loop infinito se algo der errado
+                            current_ip += 1
+                    else:
+                        print(f"Formato de faixa X.X.X.X-Z só suportado para IPv4: {segment}")
+                        continue
+
+            except ValueError as e:
+                print(f"Erro ao processar faixa de IP '{segment}': {e}")
+                continue
+        elif '/' in segment: # Formato CIDR X.X.X.X/Y
+            try:
+                network = ipaddress.ip_network(segment, strict=False)
+                for ip_obj in network.hosts(): # .hosts() exclui o endereço de rede e broadcast
+                    all_ips_to_scan.append(ip_obj)
+            except ValueError as e:
+                print(f"Erro ao processar faixa CIDR '{segment}': {e}")
+                continue
+        else: # IP único
+            try:
+                all_ips_to_scan.append(ipaddress.ip_address(segment))
+            except ValueError as e:
+                print(f"Erro ao processar IP único '{segment}': {e}")
+                continue
+    
+    if not all_ips_to_scan:
+        return jsonify({"message": "Nenhuma faixa de IP válida para escanear configurada ou fornecida."}), 400
+
+    print(f"Total de IPs a serem escaneados: {len(all_ips_to_scan)}")
+    
+    active_ips_found = []
+    # Usando ThreadPoolExecutor para pingar em paralelo (mais rápido para muitos IPs)
+    # Ajuste max_workers conforme os recursos do seu sistema
+    with ThreadPoolExecutor(max_workers=20) as executor:
+        # Divide a lista de IPs em chunks menores para não sobrecarregar o executor de uma vez
+        chunk_size = 50 
+        results = []
+        for i in range(0, len(all_ips_to_scan), chunk_size):
+            ip_chunk = all_ips_to_scan[i:i + chunk_size]
+            # Mapeia a função ping_ip para cada IP no chunk
+            # A função process_discovered_ip é chamada dentro de scan_ip_range_segment
+            # que é chamada por ping_and_process_chunk
+            future = executor.submit(scan_ip_range_segment, ip_chunk)
+            results.append(future)
+        
+        for future in results:
+            active_ips_found.extend(future.result())
+
+
+    # A varredura é síncrona por enquanto (a requisição espera terminar)
+    # Para varreduras longas, o ideal seria uma tarefa assíncrona (Celery, etc.)
+    
+    return jsonify({
+        "message": f"Varredura de descoberta concluída. {len(active_ips_found)} IPs ativos encontrados e processados.",
+        "active_ips": active_ips_found # Retorna os IPs que responderam
+    }), 200
+@app.route('/api/discovery/discovered-ips', methods=['GET'])
+def get_discovered_ips():
+    try:
+        conn = get_db_connection()
+        if not conn:
+            return jsonify({"message": "Erro interno no servidor (conexão DB)"}), 500
+
+        cursor = conn.cursor(dictionary=True)
+
+        # Ordenar por data de última detecção, os mais recentes primeiro
+        query = """
+        SELECT 
+            ID_IPDescoberto, 
+            EnderecoIP, 
+            DataPrimeiraDeteccao,
+            DataUltimaDeteccao, 
+            StatusResolucao,
+            NomeHostResolvido
+        FROM IPsDescobertos 
+        ORDER BY DataUltimaDeteccao DESC
+        """
+        cursor.execute(query)
+        discovered_ips = cursor.fetchall()
+
+        cursor.close()
+        conn.close()
+
+        return jsonify(discovered_ips), 200
+
+    except Exception as e:
+        print(f"Erro em /api/discovery/discovered-ips: {e}")
+        # Mantenha o fechamento da conexão em caso de erro, se aplicável
+        if 'conn' in locals() and conn and conn.is_connected():
+            if 'cursor' in locals() and cursor: cursor.close()
+            conn.close()
+        return jsonify({"message": "Erro ao buscar IPs descobertos"}), 500
+    
 @app.route('/')
 def home():
     return "Bem-vindo ao Backend!"
