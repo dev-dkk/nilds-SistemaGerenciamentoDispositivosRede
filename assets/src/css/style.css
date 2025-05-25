@@ -775,3 +775,89 @@ body {
     margin-bottom: 5px;
     font-size: 14px;
 }
+.btn-small {
+    padding: 4px 8px;
+    font-size: 12px;
+    margin-right: 5px;
+}
+.btn-success { /* Se ainda não tiver um estilo para botões de sucesso */
+    background-color: #28a745;
+    color: white;
+}
+.btn-success:hover {
+    background-color: #218838;
+}
+
+/* Estilos para a tabela na página de Varredura (varredura.html) */
+.discovered-ips-table-section table {
+    width: 100%;                    
+    border-collapse: collapse;    
+    margin-top: 20px;             
+    font-size: 14px;             
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08); 
+}
+
+.discovered-ips-table-section th,
+.discovered-ips-table-section td {
+    border: 1px solid #e0e0e0;     
+    padding: 10px 15px;           
+    text-align: left;             
+    vertical-align: middle;     
+}
+
+.discovered-ips-table-section th {
+    background-color: #f7f9fc;    
+    color: #333a40;              
+    font-weight: 600;           
+}
+
+/* Efeito zebrado para melhor leitura das linhas (opcional) */
+.discovered-ips-table-section tbody tr:nth-child(even) {
+    background-color: #fdfdfd; 
+}
+
+.discovered-ips-table-section tbody tr:hover {
+    background-color: #f1f5f9;     /* Cor de fundo suave ao passar o mouse sobre uma linha */
+}
+
+/* Ajuste para os botões de ação se o padding da célula os deixar muito grandes */
+.discovered-ips-table-section .action-link.btn-icon {
+    padding: 5px 7px; /* Pode reduzir um pouco o padding dos botões se necessário */
+    font-size: 15px;  /* Pode ajustar o tamanho do ícone se necessário */
+}
+
+/* Estilos para botões de ação com ícones*/
+.action-link.btn-icon {
+    background-color: transparent;
+    border: none;
+    color: #555; /* Cor padrão do ícone */
+    padding: 6px 8px; /* Ajuste o padding conforme necessário */
+    margin: 0 3px;   /* Espaçamento entre os botões */
+    font-size: 16px; /* Tamanho do ícone */
+    cursor: pointer;
+    border-radius: 4px; /* Borda arredondada suave */
+    transition: color 0.2s ease, background-color 0.2s ease;
+}
+
+.action-link.btn-icon:hover {
+    color: #007bff; /* Cor primária no hover */
+    background-color: #f0f0f0; /* Fundo suave no hover */
+}
+
+/* Cores específicas para certos ícones de ação */
+.action-link.btn-icon.btn-success-icon:hover {
+    color: #28a745; /* Verde para sucesso/adicionar */
+}
+
+.action-link.btn-icon.btn-danger-icon:hover {
+    color: #dc3545; /* Vermelho para perigo/ignorar/remover */
+}
+
+
+.action-link.btn-icon i.fa-search-plus { color: #007bff; }
+.action-link.btn-icon i.fa-plus-circle { color: #28a745; }
+.action-link.btn-icon i.fa-ban { color: #ff0000; }
+
+.action-link.btn-icon:hover i.fa-search-plus { color: #0056b3; }
+.action-link.btn-icon:hover i.fa-plus-circle { color: #1e7e34; }
+.action-link.btn-icon:hover i.fa-ban { color: #ff0000; }
