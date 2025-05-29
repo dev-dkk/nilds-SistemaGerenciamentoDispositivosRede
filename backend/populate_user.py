@@ -17,7 +17,7 @@ def create_user():
             database=os.getenv('DB_NAME')
         )
         cursor = conn.cursor()
-
+        print('Conexão com banco de dados bem sucedida!')
         print("--- Criação de Novo Usuário ---")
         nome_usuario = input("Nome de Usuário (para login): ")
         email = input("Email: ")

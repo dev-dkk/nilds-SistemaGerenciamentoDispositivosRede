@@ -36,6 +36,53 @@ document.addEventListener('DOMContentLoaded', function() {
 
 
     // --- FUNÇÕES AUXILIARES ---
+
+    function prefillAndOpenAddModal(data) {
+        console.log("DEVICE HANDLER: Pré-preenchendo modal com dados:", data);
+        addDeviceForm.reset(); // Limpa o formulário primeiro
+        addDeviceMessageDiv.textContent = '';
+        addDeviceMessageDiv.className = 'form-message-placeholder';
+
+        // Pré-preenche os campos
+        if (data.nomeHost) document.getElementById('add-nomeHost').value = data.nomeHost;
+
+        // Se você adicionou os campos de IP e MAC ao modal:
+        if (document.getElementById('add-enderecoIP') && data.enderecoIP) {
+            document.getElementById('add-enderecoIP').value = data.enderecoIP;
+        }
+        if (document.getElementById('add-enderecoMAC') && data.enderecoMAC) {
+            document.getElementById('add-enderecoMAC').value = data.enderecoMAC;
+        }
+
+        // Coloca outras informações na descrição ou observações
+        let descricao = data.descricaoInicial || '';
+        // if (data.osEstimado) { // Exemplo de como adicionar mais info
+        //     descricao += (descricao ? "\n" : "") + `SO Estimado (descoberta): ${data.osEstimado}`;
+        // }
+        document.getElementById('add-descricao').value = descricao; // Preenche a descrição
+
+        // Guarda o ID do IP descoberto para usar após salvar (ex: em um atributo do formulário)
+        if (data.id_ip_descoberto) {
+            addDeviceForm.dataset.idIpDescoberto = data.id_ip_descoberto; 
+        } else {
+            delete addDeviceForm.dataset.idIpDescoberto; // Remove se não houver
+        }
+
+        // Popula os selects (Fabricante, SO, Tipo)
+        populateSelect(addFabricanteSelect, '/fabricantes', 'ID_Fabricante', 'Nome');
+        populateSelect(addSoSelect, '/sistemasoperacionais', 'ID_SistemaOperacional', 'Nome', true);
+        populateSelect(addTipoDispositivoSelect, '/tiposdispositivo', 'ID_TipoDispositivo', 'Nome');
+
+        addDeviceModal.style.display = 'block'; // Abre o modal
+    }
+
+    // Verifica sessionStorage ao carregar a página
+    const prefillDataString = sessionStorage.getItem('prefillDeviceData');
+    if (prefillDataString) {
+        const prefillData = JSON.parse(prefillDataString);
+        prefillAndOpenAddModal(prefillData);
+        sessionStorage.removeItem('prefillDeviceData'); // Limpa para não reabrir na próxima vez
+    }
     async function fetchAndDisplayDevices(searchTerm = '') {
         if (!deviceListTbody) {
             console.error("Elemento tbody com ID 'device-list-tbody' não foi encontrado!");
@@ -43,14 +90,14 @@ document.addEventListener('DOMContentLoaded', function() {
         }
         deviceListTbody.innerHTML = loadingMessageRow;
 
-        let apiUrl = 'http://127.0.0.1:5000/devices';
+        let apiURL = 'http://127.0.0.1:5000/devices';
         if (searchTerm) {
-            apiUrl += `?search=${encodeURIComponent(searchTerm)}`;
+            apiURL += `?search=${encodeURIComponent(searchTerm)}`;
         }
-        console.log("API URL para fetch (GET /devices):", apiUrl);
+        console.log("API URL para fetch (GET /devices):", apiURL);
 
         try {
-            const response = await fetch(apiUrl, {
+            const response = await fetch(apiURL, {
                 method: 'GET',
                 headers: {
                     'Content-Type': 'application/json'
@@ -237,16 +284,45 @@ document.addEventListener('DOMContentLoaded', function() {
                     body: JSON.stringify(deviceData)
                 });
                 const result = await response.json();
-                if (response.ok) {
-                    addDeviceMessageDiv.textContent = result.message || 'Dispositivo adicionado com sucesso!';
-                    addDeviceMessageDiv.className = 'success-message';
-                    addDeviceForm.reset();
-                    fetchAndDisplayDevices();
-                    setTimeout(() => { addDeviceModal.style.display = 'none'; }, 1500);
-                } else {
-                    addDeviceMessageDiv.textContent = result.message || 'Erro ao adicionar dispositivo.';
-                    addDeviceMessageDiv.className = 'error-message';
+                if (response.ok) { // ou response.status === 201
+                addDeviceMessageDiv.textContent = result.message || 'Dispositivo adicionado com sucesso!';
+                addDeviceMessageDiv.className = 'success-message';
+
+                const idIpDescobertoOriginal = addDeviceForm.dataset.idIpDescoberto; // Pega o ID salvo
+
+                addDeviceForm.reset();
+                delete addDeviceForm.dataset.idIpDescoberto; // Limpa o dataset
+
+                fetchAndDisplayDevices(); // Atualiza a lista de dispositivos na página principal
+
+                // Se o dispositivo foi adicionado a partir de um IP descoberto, atualiza o status desse IP
+                if (idIpDescobertoOriginal) {
+                    try {
+                        console.log(`DEVICE HANDLER: Atualizando status do IP Descoberto ID ${idIpDescobertoOriginal} para 'Inventariado'`);
+                        const statusUpdateResponse = await fetch(`http://127.0.0.1:5000/api/discovery/discovered-ips/${idIpDescobertoOriginal}/status`, {
+                            method: 'PUT',
+                            headers: {'Content-Type': 'application/json'},
+                            body: JSON.stringify({ status: 'Inventariado' })
+                        });
+                        if (!statusUpdateResponse.ok) {
+                            const errStatusData = await statusUpdateResponse.json().catch(() => ({}));
+                            console.error(`Falha ao atualizar status do IP descoberto: ${errStatusData.message || statusUpdateResponse.statusText}`);
+                            // Não precisa mostrar um alert para o usuário aqui, mas logar é bom
+                        } else {
+                            console.log(`Status do IP Descoberto ID ${idIpDescobertoOriginal} atualizado para 'Inventariado'.`);
+                        }
+                    } catch (statusError) {
+                        console.error('Erro ao tentar atualizar status do IP descoberto:', statusError);
+                    }
                 }
+
+                setTimeout(() => { 
+                    addDeviceModal.style.display = 'none';
+                }, 1500);
+            } else {
+                addDeviceMessageDiv.textContent = result.message || 'Erro ao adicionar dispositivo.';
+                addDeviceMessageDiv.className = 'error-message';
+            }
             } catch (error) {
                 console.error('Erro ao submeter novo dispositivo:', error);
                 addDeviceMessageDiv.textContent = 'Erro de comunicação com o servidor.';

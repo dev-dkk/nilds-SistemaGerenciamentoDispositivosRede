@@ -8,14 +8,17 @@ import subprocess # Para executar o comando ping
 import platform   # Para identificar o sistema operacional para o comando ping
 import ipaddress  # Para trabalhar com faixas de IP
 import socket
+import nmap # Para varredura detalhada
 from concurrent.futures import ThreadPoolExecutor # Para executar pings em paralelo (opcional, mas bom para performance)
+from datetime import datetime, timedelta # Adicionado para PasswordResetTokens (se não estava antes)
+
 # Carrega as variáveis de ambiente do arquivo .env
 load_dotenv()
 
 app = Flask(__name__)
 CORS(app) #Habilitando o CORS
 
-# Configuração do Banco de Dados (exemplo, pode ser melhorada)
+# Configuração do Banco de Dados
 def get_db_connection():
     try:
         conn = mysql.connector.connect(
@@ -24,21 +27,20 @@ def get_db_connection():
             password=os.getenv('DB_PASSWORD'),
             database=os.getenv('DB_NAME')
         )
+        print(f'Conexão com o MYSQL bem sucedida!!!!!!!') # Mantido como no seu original
         return conn
     except mysql.connector.Error as err:
         print(f"Erro ao conectar ao MySQL: {err}")
         return None
+
 #Executar ping e guardar IP´s descobertos
 def ping_ip(ip_str):
     """Tenta pingar um IP e retorna True se bem-sucedido, False caso contrário."""
     try:
-        # Determina o parâmetro de contagem e timeout com base no SO
         if platform.system().lower() == 'windows':
-            # Para Windows: -n envia X pacotes, -w especifica timeout em milissegundos para cada resposta
-            command = ['ping', '-n', '2', '-w', '500', ip_str] # Envia 2 pacotes, espera até 500ms por resposta
+            command = ['ping', '-n', '2', '-w', '500', ip_str] 
         else:
-            # Para Linux/macOS: -c envia X pacotes, -W especifica timeout em segundos para esperar por uma resposta
-            command = ['ping', '-c', '2', '-W', '1', ip_str] # Envia 2 pacotes, espera até 1s por resposta
+            command = ['ping', '-c', '2', '-W', '1', ip_str]
 
         startupinfo = None
         if platform.system().lower() == 'windows':
@@ -46,11 +48,9 @@ def ping_ip(ip_str):
             startupinfo.dwFlags |= subprocess.STARTF_USESHOWWINDOW
             startupinfo.wShowWindow = subprocess.SW_HIDE
         
-        # Aumentando o timeout do communicate para garantir que os pings tenham tempo
         process = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE, startupinfo=startupinfo)
-        stdout, stderr = process.communicate(timeout=3) # Timeout total para o processo Popen de 3 segundos
+        stdout, stderr = process.communicate(timeout=3) 
 
-        # Log detalhado da saída do ping
         stdout_decoded = stdout.decode(errors='ignore').strip()
         stderr_decoded = stderr.decode(errors='ignore').strip()
         print(f"Ping para {ip_str}: RC={process.returncode}")
@@ -62,7 +62,10 @@ def ping_ip(ip_str):
         return process.returncode == 0
     except subprocess.TimeoutExpired:
         print(f"Timeout GERAL ao executar comando ping para {ip_str}")
-        if process: process.kill() 
+        # 'process' pode não estar definido se Popen falhar antes de atribuir
+        # Adicionar uma checagem se 'process' existe no escopo local.
+        # No entanto, se Popen lança TimeoutExpired, process já foi atribuído.
+        if 'process' in locals() and process: process.kill() 
         return False
     except Exception as e:
         print(f"Exceção ao pingar {ip_str}: {e}")
@@ -72,26 +75,20 @@ def process_discovered_ip(ip_str):
     """Processa um IP que respondeu ao ping: tenta resolver o hostname e insere/atualiza na tabela IPsDescobertos."""
     conn = None
     cursor = None
-    hostname_resolvido = None  # Inicializa como None
+    hostname_resolvido = None
 
     try:
-        # 1. Tenta resolver o hostname via Reverse DNS
         print(f"Tentando resolver hostname para IP: {ip_str}...")
         try:
-            # O timeout padrão para gethostbyaddr pode ser longo. 
-            # Para não bloquear demais, podemos definir um timeout global para a resolução.
-            # No entanto, socket.gethostbyaddr não aceita timeout diretamente.
-            # Uma resolução DNS lenta pode impactar o tempo total da varredura.
             hostname_resolvido, _, _ = socket.gethostbyaddr(ip_str)
             print(f"  Hostname resolvido para {ip_str}: {hostname_resolvido}")
-        except socket.herror: # Erro específico para "host not found", "no recovery", etc.
+        except socket.herror: 
             print(f"  Não foi possível resolver o hostname para {ip_str} via rDNS (socket.herror).")
             hostname_resolvido = None
-        except Exception as e_dns: # Pega outros erros potenciais durante a resolução
+        except Exception as e_dns: 
             print(f"  Erro genérico ao tentar resolver DNS para {ip_str}: {e_dns}")
             hostname_resolvido = None
         
-        # 2. Conecta ao banco para salvar/atualizar
         conn = get_db_connection()
         if not conn:
             print(f"Não foi possível conectar ao DB para processar IP {ip_str}")
@@ -99,20 +96,16 @@ def process_discovered_ip(ip_str):
 
         cursor = conn.cursor(dictionary=True)
         
-        # 3. Verifica se o IP já existe na tabela IPsDescobertos
         cursor.execute("SELECT ID_IPDescoberto FROM IPsDescobertos WHERE EnderecoIP = %s", (ip_str,))
         existing_ip_data = cursor.fetchone()
 
         if existing_ip_data:
-            # Se existe, atualiza DataUltimaDeteccao (automaticamente pelo DB) 
-            # e o NomeHostResolvido se tivermos um novo ou se o anterior era nulo.
             print(f"  IP {ip_str} já existe. Atualizando NomeHostResolvido se necessário.")
-            update_query = "UPDATE IPsDescobertos SET NomeHostResolvido = %s WHERE ID_IPDescoberto = %s"
+            update_query = "UPDATE IPsDescobertos SET NomeHostResolvido = %s WHERE ID_IPDescoberto = %s" # DataUltimaDeteccao é atualizado por ON UPDATE
             cursor.execute(update_query, (hostname_resolvido, existing_ip_data['ID_IPDescoberto']))
             conn.commit()
             print(f"  IP {ip_str} (Hostname: {hostname_resolvido or 'N/A'}) atualizado.")
         else:
-            # Se não existe, insere como 'Novo'
             print(f"  Novo IP detectado: {ip_str}. Inserindo no banco...")
             insert_query = "INSERT INTO IPsDescobertos (EnderecoIP, NomeHostResolvido, StatusResolucao) VALUES (%s, %s, %s)"
             cursor.execute(insert_query, (ip_str, hostname_resolvido, 'Novo'))
@@ -135,30 +128,27 @@ def scan_ip_range_segment(ip_list_segment):
         ip_str = str(ip_obj)
         if ping_ip(ip_str):
             active_ips_in_segment.append(ip_str)
-            process_discovered_ip(ip_str) # Processa e salva no DB
+            process_discovered_ip(ip_str) 
     return active_ips_in_segment
 
 @app.route('/api/discovery/start-scan', methods=['POST'])
 def start_discovery_scan():
-    # Pega as faixas de IP do .env
-    ip_ranges_str = os.getenv('DISCOVERY_IP_RANGES', '192.168.1.1-192.168.1.20') # Default se não definido
-    
+    ip_ranges_str = os.getenv('DISCOVERY_IP_RANGES', '192.168.1.1-192.168.1.20') 
     all_ips_to_scan = []
     range_segments = ip_ranges_str.split(',')
     
     for segment in range_segments:
         segment = segment.strip()
-        if '-' in segment: # Formato X.X.X.X-Y.Y.Y.Y ou X.X.X.X-Z (onde Z é o último octeto)
+        if '-' in segment: 
             try:
                 start_ip_str, end_part_str = segment.split('-')
                 start_ip = ipaddress.ip_address(start_ip_str)
                 
-                if '.' in end_part_str : # é um IP completo Y.Y.Y.Y
+                if '.' in end_part_str : 
                     end_ip = ipaddress.ip_address(end_part_str)
                     if start_ip.version != end_ip.version:
                         print(f"Faixa inválida: {segment} - IPs de versões diferentes.")
                         continue
-                    # Garante que start_ip seja menor ou igual a end_ip
                     if start_ip > end_ip:
                         print(f"Faixa inválida: {segment} - IP inicial maior que IP final.")
                         continue
@@ -166,14 +156,12 @@ def start_discovery_scan():
                     while current_ip <= end_ip:
                         all_ips_to_scan.append(current_ip)
                         current_ip += 1
-                else: # é apenas o último octeto Z
+                else: 
                     end_octet = int(end_part_str)
                     if not (0 <= end_octet <= 255):
                          print(f"Faixa inválida: {segment} - Octeto final inválido.")
                          continue
                     
-                    # Constrói o IP final baseado no IP inicial
-                    # Ex: 192.168.1.1-50 -> start_ip=192.168.1.1, end_ip_addr_bytes[3]=50
                     start_ip_addr_bytes = bytearray(start_ip.packed)
                     if start_ip.version == 4 and len(start_ip_addr_bytes) == 4 :
                         if end_octet < start_ip_addr_bytes[3]:
@@ -186,24 +174,23 @@ def start_discovery_scan():
                         current_ip = start_ip
                         while current_ip <= end_ip:
                             all_ips_to_scan.append(current_ip)
-                            if current_ip == end_ip : break # Evita loop infinito se algo der errado
+                            if current_ip == end_ip : break 
                             current_ip += 1
                     else:
                         print(f"Formato de faixa X.X.X.X-Z só suportado para IPv4: {segment}")
                         continue
-
             except ValueError as e:
                 print(f"Erro ao processar faixa de IP '{segment}': {e}")
                 continue
-        elif '/' in segment: # Formato CIDR X.X.X.X/Y
+        elif '/' in segment: 
             try:
                 network = ipaddress.ip_network(segment, strict=False)
-                for ip_obj in network.hosts(): # .hosts() exclui o endereço de rede e broadcast
+                for ip_obj in network.hosts(): 
                     all_ips_to_scan.append(ip_obj)
             except ValueError as e:
                 print(f"Erro ao processar faixa CIDR '{segment}': {e}")
                 continue
-        else: # IP único
+        else: 
             try:
                 all_ips_to_scan.append(ipaddress.ip_address(segment))
             except ValueError as e:
@@ -216,63 +203,42 @@ def start_discovery_scan():
     print(f"Total de IPs a serem escaneados: {len(all_ips_to_scan)}")
     
     active_ips_found = []
-    # Usando ThreadPoolExecutor para pingar em paralelo (mais rápido para muitos IPs)
-    # Ajuste max_workers conforme os recursos do seu sistema
     with ThreadPoolExecutor(max_workers=20) as executor:
-        # Divide a lista de IPs em chunks menores para não sobrecarregar o executor de uma vez
         chunk_size = 50 
-        results = []
+        results_futures = [] # Renomeado para evitar conflito com 'results' da biblioteca nmap
         for i in range(0, len(all_ips_to_scan), chunk_size):
             ip_chunk = all_ips_to_scan[i:i + chunk_size]
-            # Mapeia a função ping_ip para cada IP no chunk
-            # A função process_discovered_ip é chamada dentro de scan_ip_range_segment
-            # que é chamada por ping_and_process_chunk
             future = executor.submit(scan_ip_range_segment, ip_chunk)
-            results.append(future)
+            results_futures.append(future)
         
-        for future in results:
+        for future in results_futures:
             active_ips_found.extend(future.result())
-
-
-    # A varredura é síncrona por enquanto (a requisição espera terminar)
-    # Para varreduras longas, o ideal seria uma tarefa assíncrona (Celery, etc.)
     
     return jsonify({
         "message": f"Varredura de descoberta concluída. {len(active_ips_found)} IPs ativos encontrados e processados.",
-        "active_ips": active_ips_found # Retorna os IPs que responderam
+        "active_ips": active_ips_found 
     }), 200
+
 @app.route('/api/discovery/discovered-ips', methods=['GET'])
 def get_discovered_ips():
+    # ... (seu código como estava, parece OK) ...
     try:
         conn = get_db_connection()
         if not conn:
             return jsonify({"message": "Erro interno no servidor (conexão DB)"}), 500
-
         cursor = conn.cursor(dictionary=True)
-
-        # Ordenar por data de última detecção, os mais recentes primeiro
         query = """
-        SELECT 
-            ID_IPDescoberto, 
-            EnderecoIP, 
-            DataPrimeiraDeteccao,
-            DataUltimaDeteccao, 
-            StatusResolucao,
-            NomeHostResolvido
-        FROM IPsDescobertos 
-        ORDER BY DataUltimaDeteccao DESC
+        SELECT ID_IPDescoberto, EnderecoIP, DataPrimeiraDeteccao, DataUltimaDeteccao, 
+               StatusResolucao, NomeHostResolvido
+        FROM IPsDescobertos ORDER BY DataUltimaDeteccao DESC
         """
         cursor.execute(query)
         discovered_ips = cursor.fetchall()
-
         cursor.close()
         conn.close()
-
         return jsonify(discovered_ips), 200
-
     except Exception as e:
         print(f"Erro em /api/discovery/discovered-ips: {e}")
-        # Mantenha o fechamento da conexão em caso de erro, se aplicável
         if 'conn' in locals() and conn and conn.is_connected():
             if 'cursor' in locals() and cursor: cursor.close()
             conn.close()
@@ -282,84 +248,85 @@ def get_discovered_ips():
 def home():
     return "Bem-vindo ao Backend!"
 
+@app.route('/api/discovery/discovered-ips/<int:id_ip_descoberto>', methods=['GET'])
+def get_single_discovered_ip(id_ip_descoberto):
+    # ... (seu código como estava, parece OK) ...
+    try:
+        conn = get_db_connection()
+        if not conn:
+            return jsonify({"message": "Erro interno no servidor (conexão DB)"}), 500
+        cursor = conn.cursor(dictionary=True)
+        query = """
+        SELECT ID_IPDescoberto, EnderecoIP, DataPrimeiraDeteccao, DataUltimaDeteccao, 
+               StatusResolucao, NomeHostResolvido, MAC_Address_Estimado, OS_Estimado, 
+               Portas_Abertas, DetalhesVarreduraExtra
+        FROM IPsDescobertos WHERE ID_IPDescoberto = %s
+        """
+        cursor.execute(query, (id_ip_descoberto,))
+        discovered_ip = cursor.fetchone()
+        cursor.close()
+        conn.close()
+        if discovered_ip:
+            return jsonify(discovered_ip), 200
+        else:
+            return jsonify({"message": "IP Descoberto não encontrado"}), 404
+    except Exception as e:
+        print(f"Erro em /api/discovery/discovered-ips/<id>: {e}")
+        if 'conn' in locals() and conn and conn.is_connected():
+            if 'cursor' in locals() and cursor: cursor.close()
+            conn.close()
+        return jsonify({"message": "Erro ao buscar IP descoberto específico"}), 500
+
 @app.route('/login', methods=['POST'])
 def login():
+    # ... (seu código como estava, parece OK) ...
     try:
         data = request.get_json()
         if not data or 'username' not in data or 'password' not in data:
             return jsonify({"message": "Dados de login ausentes ou inválidos"}), 400
-
         username_or_email = data['username']
         password_digitada = data['password']
-
         conn = get_db_connection()
-        if not conn:
-            return jsonify({"message": "Erro interno no servidor (conexão DB)"}), 500
-        
-        cursor = conn.cursor(dictionary=True) # dictionary=True para retornar linhas como dicionários
-
-        # Tenta encontrar o usuário pelo NomeUsuario ou Email
+        if not conn: return jsonify({"message": "Erro interno no servidor (conexão DB)"}), 500
+        cursor = conn.cursor(dictionary=True)
         query = "SELECT ID_Usuario, NomeUsuario, SenhaHash, Ativo FROM Usuario WHERE NomeUsuario = %s OR Email = %s"
         cursor.execute(query, (username_or_email, username_or_email))
         user = cursor.fetchone()
-
         if user and user['Ativo']:
-            senha_hash_bd = user['SenhaHash'].encode('utf-8') # Senha do BD vem como string, precisa ser bytes
+            senha_hash_bd = user['SenhaHash'].encode('utf-8')
             password_digitada_bytes = password_digitada.encode('utf-8')
-
             if bcrypt.checkpw(password_digitada_bytes, senha_hash_bd):
-                # Login bem-sucedido!
-                # Em uma aplicação real, você geraria um token JWT (JSON Web Token) aqui
-                # e o retornaria para o cliente para autenticação em requisições futuras.
                 cursor.close()
                 conn.close()
-                return jsonify({
-                    "message": "Login bem-sucedido!",
-                    "user": {
-                        "id": user['ID_Usuario'],
-                        "username": user['NomeUsuario']
-                    }
-                }), 200
+                return jsonify({"message": "Login bem-sucedido!", "user": {"id": user['ID_Usuario'], "username": user['NomeUsuario']}}), 200
             else:
-                # Senha incorreta
                 cursor.close()
                 conn.close()
                 return jsonify({"message": "Usuário ou senha inválidos"}), 401
         else:
-            # Usuário não encontrado ou inativo
             cursor.close()
             conn.close()
             return jsonify({"message": "Usuário ou senha inválidos"}), 401
-
     except Exception as e:
         print(f"Erro no endpoint /login: {e}")
-        # Tentar fechar a conexão se ela existir e estiver aberta em caso de erro
         if 'conn' in locals() and conn and conn.is_connected():
-            if 'cursor' in locals() and cursor:
-                cursor.close()
+            if 'cursor' in locals() and cursor: cursor.close()
             conn.close()
         return jsonify({"message": "Erro interno no servidor"}), 500
     
 @app.route('/devices', methods=['GET'])
 def get_devices():
+    # ... (seu código como estava, parece OK, incluindo a correção do params.extend([like_search_term] * 9)) ...
     try:
         conn = get_db_connection()
-        if not conn:
-            return jsonify({"message": "Erro interno no servidor (conexão DB)"}), 500
-        
+        if not conn: return jsonify({"message": "Erro interno no servidor (conexão DB)"}), 500
         cursor = conn.cursor(dictionary=True)
-        
-        # Pega o termo de busca da query string da URL (ex: /devices?search=meu_pc)
-        search_term = request.args.get('search', None) # 'search' é o nome do parâmetro, None se não for fornecido
-
+        search_term = request.args.get('search', None)
         base_query = """
-        SELECT 
-            d.ID_Dispositivo, d.NomeHost, d.StatusAtual, d.DataUltimaVarredura,
-            ip.EnderecoIPValor as IPPrincipal, 
-            ifr.EnderecoMAC as MACPrincipal,
-            so.Nome as SistemaOperacionalNome,
-            fab.Nome as FabricanteNome,
-            td.Nome as TipoDispositivoNome
+        SELECT d.ID_Dispositivo, d.NomeHost, d.StatusAtual, d.DataUltimaVarredura,
+               ip.EnderecoIPValor as IPPrincipal, ifr.EnderecoMAC as MACPrincipal,
+               so.Nome as SistemaOperacionalNome, fab.Nome as FabricanteNome,
+               td.Nome as TipoDispositivoNome
         FROM Dispositivo d
         LEFT JOIN InterfaceRede ifr ON d.ID_Dispositivo = ifr.ID_Dispositivo 
         LEFT JOIN EnderecoIP ip ON ifr.ID_Interface = ip.ID_Interface AND ip.Principal = TRUE
@@ -367,48 +334,28 @@ def get_devices():
         LEFT JOIN Fabricante fab ON d.ID_Fabricante = fab.ID_Fabricante
         LEFT JOIN TipoDispositivo td ON d.ID_TipoDispositivo = td.ID_TipoDispositivo
         """
-        
         params = []
         where_clauses = []
-
         if search_term:
             like_search_term = f"%{search_term}%"
-            # Adicione os campos que você quer que sejam pesquisáveis
-            # Usamos OR para que o termo possa aparecer em qualquer um dos campos
             where_clauses.append("""
-            (d.NomeHost LIKE %s OR 
-             ip.EnderecoIPValor LIKE %s OR 
-             ifr.EnderecoMAC LIKE %s OR
-             so.Nome LIKE %s OR 
-             fab.Nome LIKE %s OR
-             td.Nome LIKE %s OR
-             d.Descricao LIKE %s OR 
-             d.Modelo LIKE %s OR
-             d.LocalizacaoFisica LIKE %s)
+            (d.NomeHost LIKE %s OR ip.EnderecoIPValor LIKE %s OR ifr.EnderecoMAC LIKE %s OR
+             so.Nome LIKE %s OR fab.Nome LIKE %s OR td.Nome LIKE %s OR
+             d.Descricao LIKE %s OR d.Modelo LIKE %s OR d.LocalizacaoFisica LIKE %s)
             """)
-            # Adiciona o termo de busca para cada placeholder %s na cláusula WHERE
-            # O número de repetições do like_search_term deve corresponder ao número de campos no OR
-            params.extend([like_search_term] * 9) # Ajuste o número '8' se mudar a quantidade de campos no OR
-
+            params.extend([like_search_term] * 9)
         if where_clauses:
-            query = base_query + " WHERE " + " AND ".join(where_clauses) # Se tiver mais filtros no futuro
+            query = base_query + " WHERE " + " AND ".join(where_clauses)
         else:
             query = base_query
-            
-        query += " ORDER BY d.NomeHost ASC" # Mantém a ordenação
-
+        query += " ORDER BY d.NomeHost ASC"
         cursor.execute(query, tuple(params))
         devices = cursor.fetchall()
-        
         cursor.close()
         conn.close()
-        
         return jsonify(devices), 200
-
     except Exception as e:
         print(f"Erro em /devices (GET com busca): {e}")
-        # ... (seu tratamento de erro e fechamento de conexão existente) ...
-        # Mantenha o fechamento da conexão em caso de erro
         if 'conn' in locals() and conn and conn.is_connected():
             if 'cursor' in locals() and cursor: cursor.close()
             conn.close()
@@ -416,89 +363,94 @@ def get_devices():
     
 @app.route('/devices', methods=['POST'])
 def add_device():
+    # ... (seu código como estava, parece OK) ...
+    conn = None 
+    cursor = None
     try:
         data = request.get_json()
-        
-        # Validação básica dos dados recebidos
-        required_fields = ['NomeHost', 'StatusAtual'] # Adicione outros campos obrigatórios
+        required_fields = ['NomeHost', 'StatusAtual']
         if not data or not all(field in data for field in required_fields):
-            return jsonify({"message": "Dados incompletos para adicionar dispositivo"}), 400
-
+            return jsonify({"message": "Dados incompletos (NomeHost e StatusAtual obrigatórios)"}), 400
         nome_host = data.get('NomeHost')
         status_atual = data.get('StatusAtual')
+        # ... (pegar outros campos: descricao, modelo, ids, localizacao, observacoes) ...
         descricao = data.get('Descricao')
         modelo = data.get('Modelo')
-        id_fabricante = data.get('ID_Fabricante') # Espera-se o ID
-        id_so = data.get('ID_SistemaOperacional') # Espera-se o ID
-        id_tipo_dispositivo = data.get('ID_TipoDispositivo') # Espera-se o ID
+        id_fabricante = data.get('ID_Fabricante')
+        id_so = data.get('ID_SistemaOperacional')
+        id_tipo_dispositivo = data.get('ID_TipoDispositivo')
         localizacao = data.get('LocalizacaoFisica')
         observacoes = data.get('Observacoes')
-        # DataDescoberta e DataUltimaModificacao têm DEFAULT ou ON UPDATE no banco
+        endereco_mac_principal = data.get('EnderecoMAC')
+        endereco_ip_principal = data.get('EnderecoIP')
+        tipo_ip_principal = data.get('TipoIP', 'IPv4')
+        id_rede_principal = data.get('ID_Rede')
+        id_fabricante_mac = data.get('ID_Fabricante_MAC')
 
         conn = get_db_connection()
-        if not conn:
-            return jsonify({"message": "Erro interno no servidor (conexão DB)"}), 500
-        
+        if not conn: return jsonify({"message": "Erro interno no servidor (conexão DB)"}), 500
         cursor = conn.cursor()
-        
-        query = """
-        INSERT INTO Dispositivo (
-            NomeHost, Descricao, Modelo, ID_Fabricante, ID_SistemaOperacional, 
-            ID_TipoDispositivo, StatusAtual, LocalizacaoFisica, Observacoes
-        ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
+        device_query = """
+        INSERT INTO Dispositivo (NomeHost, Descricao, Modelo, ID_Fabricante, ID_SistemaOperacional, 
+                                 ID_TipoDispositivo, StatusAtual, LocalizacaoFisica, Observacoes) 
+        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
         """
-        cursor.execute(query, (
-            nome_host, descricao, modelo, id_fabricante, id_so, 
-            id_tipo_dispositivo, status_atual, localizacao, observacoes
-        ))
+        cursor.execute(device_query, (nome_host, descricao, modelo, id_fabricante, id_so, 
+                                     id_tipo_dispositivo, status_atual, localizacao, observacoes))
+        id_dispositivo_novo = cursor.lastrowid
+        if id_dispositivo_novo and endereco_mac_principal and endereco_ip_principal:
+            interface_query = """
+            INSERT INTO InterfaceRede (ID_Dispositivo, EnderecoMAC, ID_Fabricante_MAC, Ativa)
+            VALUES (%s, %s, %s, %s)
+            """
+            cursor.execute(interface_query, (id_dispositivo_novo, endereco_mac_principal, id_fabricante_mac, True))
+            id_interface_nova = cursor.lastrowid
+            ip_query = """
+            INSERT INTO EnderecoIP (ID_Interface, EnderecoIPValor, TipoIP, ID_Rede, Principal, TipoAtribuicao)
+            VALUES (%s, %s, %s, %s, %s, %s)
+            """
+            cursor.execute(ip_query, (id_interface_nova, endereco_ip_principal, tipo_ip_principal, 
+                                     id_rede_principal, True, data.get('TipoAtribuicao', 'Descoberto')))
         conn.commit()
-        new_device_id = cursor.lastrowid # Pega o ID do dispositivo inserido
-        
-        cursor.close()
-        conn.close()
-        
-        # Idealmente, aqui você também poderia adicionar dados às tabelas InterfaceRede e EnderecoIP
-        # se eles fossem fornecidos na requisição. Por enquanto, vamos simplificar.
-
-        return jsonify({"message": "Dispositivo adicionado com sucesso!", "ID_Dispositivo": new_device_id}), 201
-
+        return jsonify({"message": "Dispositivo adicionado com sucesso!", "ID_Dispositivo": id_dispositivo_novo}), 201
     except mysql.connector.Error as db_err:
-        print(f"Erro de banco de dados em /devices (POST): {db_err}")
-        # Verificar erro de constraint de unicidade para NomeHost
-        if db_err.errno == 1062: # Código de erro para entrada duplicada
-             return jsonify({"message": f"Erro: NomeHost '{data.get('NomeHost')}' já existe."}), 409 # 409 Conflict
-        if 'conn' in locals() and conn and conn.is_connected():
-            if 'cursor' in locals() and cursor: cursor.close()
-            conn.close()
+        if conn: conn.rollback()
+        print(f"Erro de banco de dados em POST /devices: {db_err}")
+        # ... (seu tratamento de erro 1062) ...
+        if db_err.errno == 1062:
+            if 'UQ_NomeHost' in db_err.msg or 'NomeHost' in db_err.msg : # Ajuste
+                return jsonify({"message": f"Erro: NomeHost '{data.get('NomeHost')}' já existe."}), 409
+            elif 'UQ_EnderecoMAC' in db_err.msg or 'EnderecoMAC' in db_err.msg: # Ajuste
+                return jsonify({"message": f"Erro: Endereço MAC '{data.get('EnderecoMAC')}' já existe."}), 409
+            else:
+                return jsonify({"message": f"Erro de duplicidade: {db_err.msg}"}), 409
         return jsonify({"message": f"Erro de banco de dados: {db_err.msg}"}), 500
     except Exception as e:
-        print(f"Erro em /devices (POST): {e}")
-        if 'conn' in locals() and conn and conn.is_connected():
-            if 'cursor' in locals() and cursor: cursor.close()
-            conn.close()
-        return jsonify({"message": "Erro ao adicionar dispositivo"}), 500
-
+        if conn: conn.rollback()
+        print(f"Erro inesperado em POST /devices: {e}")
+        import traceback
+        traceback.print_exc()
+        return jsonify({"message": "Erro interno ao adicionar dispositivo"}), 500
+    finally:
+        if cursor: cursor.close()
+        if conn and conn.is_connected(): conn.close()
 
 @app.route('/devices/<int:device_id>', methods=['GET'])
-def get_device_by_id(device_id):
+def get_device_by_id(device_id): # Esta função já estava no seu código, mantida.
+    conn = None
+    cursor = None
     try:
         conn = get_db_connection()
-        if not conn:
-            return jsonify({"message": "Erro interno no servidor (conexão DB)"}), 500
-        
+        if not conn: return jsonify({"message": "Erro interno no servidor (conexão DB)"}), 500
         cursor = conn.cursor(dictionary=True)
-        
-        # Query para buscar um dispositivo específico com detalhes completos
-        # Similar à query de listar todos, mas filtrando pelo ID e buscando mais detalhes se necessário
-        query = """
-        SELECT 
-            d.ID_Dispositivo, d.NomeHost, d.Descricao, d.Modelo, 
-            d.ID_Fabricante, fab.Nome as FabricanteNome,
-            d.ID_SistemaOperacional, so.Nome as SistemaOperacionalNome, so.Versao as SistemaOperacionalVersao, so.Familia as SistemaOperacionalFamilia,
-            d.ID_TipoDispositivo, td.Nome as TipoDispositivoNome,
-            d.DataDescoberta, d.DataUltimaModificacao, d.DataUltimaVarredura,
-            d.StatusAtual, d.LocalizacaoFisica, d.Observacoes,
-            u.NomeUsuario as GerenciadoPorNomeUsuario
+        main_device_query = """
+        SELECT d.ID_Dispositivo, d.NomeHost, d.Descricao, d.Modelo, 
+               d.ID_Fabricante, fab.Nome as FabricanteNome,
+               d.ID_SistemaOperacional, so.Nome as SistemaOperacionalNome, so.Versao as SistemaOperacionalVersao, so.Familia as SistemaOperacionalFamilia,
+               d.ID_TipoDispositivo, td.Nome as TipoDispositivoNome, 
+               d.DataDescoberta, d.DataUltimaModificacao, d.DataUltimaVarredura,
+               d.StatusAtual, d.LocalizacaoFisica, d.Observacoes,
+               u.NomeUsuario as GerenciadoPorNomeUsuario
         FROM Dispositivo d
         LEFT JOIN Fabricante fab ON d.ID_Fabricante = fab.ID_Fabricante
         LEFT JOIN SistemaOperacional so ON d.ID_SistemaOperacional = so.ID_SistemaOperacional
@@ -506,163 +458,128 @@ def get_device_by_id(device_id):
         LEFT JOIN Usuario u ON d.GerenciadoPor = u.ID_Usuario
         WHERE d.ID_Dispositivo = %s
         """
-        cursor.execute(query, (device_id,))
+        cursor.execute(main_device_query, (device_id,))
         device = cursor.fetchone()
-        
         if device:
-            # Aqui você poderia buscar informações adicionais, como todas as interfaces de rede e IPs
-            # associados a este dispositivo, e adicioná-los ao dicionário 'device'.
-            # Exemplo (simplificado):
             interfaces_query = """
             SELECT ifr.ID_Interface, ifr.NomeInterface, ifr.EnderecoMAC, fab_mac.Nome as FabricanteMAC,
-                   ip.EnderecoIPValor, ip.TipoIP, ip.TipoAtribuicao, r.NomeRede
+                   ip.EnderecoIPValor, ip.TipoIP, ip.TipoAtribuicao, r.NomeRede, ip.Principal as IPPrincipal
             FROM InterfaceRede ifr
             LEFT JOIN Fabricante fab_mac ON ifr.ID_Fabricante_MAC = fab_mac.ID_Fabricante
             LEFT JOIN EnderecoIP ip ON ifr.ID_Interface = ip.ID_Interface
             LEFT JOIN Rede r ON ip.ID_Rede = r.ID_Rede
             WHERE ifr.ID_Dispositivo = %s
+            ORDER BY ifr.ID_Interface ASC, ip.Principal DESC
             """
             cursor.execute(interfaces_query, (device_id,))
             device['interfaces'] = cursor.fetchall()
-            
-            cursor.close()
-            conn.close()
+            print(f"BACKEND /devices/<id> - Enviando dispositivo: {device}")
             return jsonify(device), 200
         else:
-            cursor.close()
-            conn.close()
             return jsonify({"message": "Dispositivo não encontrado"}), 404
-
     except Exception as e:
         print(f"Erro em /devices/<id> (GET): {e}")
-        if 'conn' in locals() and conn and conn.is_connected():
-            if 'cursor' in locals() and cursor: cursor.close()
-            conn.close()
+        import traceback
+        traceback.print_exc()
         return jsonify({"message": "Erro ao buscar detalhes do dispositivo"}), 500
-
+    finally:
+        if cursor: cursor.close()
+        if conn and conn.is_connected(): conn.close()
 
 @app.route('/devices/<int:device_id>', methods=['PUT'])
 def update_device(device_id):
+    # ... (seu código como estava, parece OK) ...
+    conn = None
+    cursor = None
     try:
         data = request.get_json()
-        if not data:
-            return jsonify({"message": "Nenhum dado fornecido para atualização"}), 400
-
+        if not data: return jsonify({"message": "Nenhum dado fornecido para atualização"}), 400
         conn = get_db_connection()
-        if not conn:
-            return jsonify({"message": "Erro interno no servidor (conexão DB)"}), 500
-        
+        if not conn: return jsonify({"message": "Erro interno no servidor (conexão DB)"}), 500
         cursor = conn.cursor(dictionary=True)
-
-        # Verificar se o dispositivo existe
         cursor.execute("SELECT * FROM Dispositivo WHERE ID_Dispositivo = %s", (device_id,))
         device = cursor.fetchone()
         if not device:
             cursor.close()
             conn.close()
             return jsonify({"message": "Dispositivo não encontrado para atualização"}), 404
-
-        # Montar a query de atualização dinamicamente com os campos fornecidos
-        # Cuidado com SQL Injection se fosse montar a query com f-strings diretamente.
-        # Usar placeholders é mais seguro.
-        
-        # Campos que podem ser atualizados na tabela Dispositivo
-        # (excluindo ID_Dispositivo, DataDescoberta, DataUltimaModificacao que são gerenciados de outra forma)
-        allowed_fields = [
-            'NomeHost', 'Descricao', 'Modelo', 'ID_Fabricante', 
-            'ID_SistemaOperacional', 'ID_TipoDispositivo', 'StatusAtual', 
-            'LocalizacaoFisica', 'Observacoes', 'GerenciadoPor', 'DataUltimaVarredura'
-        ]
-        
+        allowed_fields = ['NomeHost', 'Descricao', 'Modelo', 'ID_Fabricante', 'ID_SistemaOperacional', 
+                          'ID_TipoDispositivo', 'StatusAtual', 'LocalizacaoFisica', 'Observacoes', 
+                          'GerenciadoPor', 'DataUltimaVarredura']
         update_fields = []
         update_values = []
-        
         for field in allowed_fields:
             if field in data:
-                update_fields.append(f"`{field}` = %s") # Usar backticks para nomes de colunas
+                update_fields.append(f"`{field}` = %s")
                 update_values.append(data[field])
-        
         if not update_fields:
             cursor.close()
             conn.close()
             return jsonify({"message": "Nenhum campo válido fornecido para atualização"}), 400
-
-        # Adiciona o device_id ao final da lista de valores para o WHERE
         update_values.append(device_id)
-        
         update_query = f"UPDATE Dispositivo SET {', '.join(update_fields)} WHERE ID_Dispositivo = %s"
-        
+        # Precisamos de um cursor sem dictionary=True para .rowcount ou .lastrowid em algumas versões/situações
+        # Mas para UPDATE, o cursor dictionary=True é ok, e o commit é o principal.
+        # Reabrindo cursor não dictionary para o execute de UPDATE para garantir.
+        cursor.close() 
+        cursor = conn.cursor() # Cursor padrão para execute
         cursor.execute(update_query, tuple(update_values))
         conn.commit()
         
-        # Buscar o dispositivo atualizado para retornar (opcional)
+        # Para retornar o dispositivo atualizado, precisamos de dictionary=True novamente
+        cursor.close()
+        cursor = conn.cursor(dictionary=True)
         cursor.execute("SELECT * FROM Dispositivo WHERE ID_Dispositivo = %s", (device_id,))
         updated_device = cursor.fetchone()
-
-        cursor.close()
-        conn.close()
         
         return jsonify({"message": "Dispositivo atualizado com sucesso!", "device": updated_device}), 200
-
     except mysql.connector.Error as db_err:
-        print(f"Erro de banco de dados em /devices/<id> (PUT): {db_err}")
-        if db_err.errno == 1062: # Erro de entrada duplicada (ex: NomeHost único)
-             return jsonify({"message": f"Erro: Conflito de dados. O NomeHost '{data.get('NomeHost')}' já pode existir."}), 409
-        if 'conn' in locals() and conn and conn.is_connected():
-            if 'cursor' in locals() and cursor: cursor.close()
-            conn.close()
+        # ... (seu tratamento de erro 1062) ...
+        if conn: conn.rollback()
+        print(f"Erro de banco de dados em PUT /devices/<id>: {db_err}")
+        if db_err.errno == 1062:
+            return jsonify({"message": f"Erro: Conflito de dados. O NomeHost '{data.get('NomeHost')}' já pode existir."}), 409
         return jsonify({"message": f"Erro de banco de dados: {db_err.msg}"}), 500
     except Exception as e:
-        print(f"Erro em /devices/<id> (PUT): {e}")
-        if 'conn' in locals() and conn and conn.is_connected():
-            if 'cursor' in locals() and cursor: cursor.close()
-            conn.close()
+        if conn: conn.rollback()
+        print(f"Erro em PUT /devices/<id>: {e}")
+        import traceback
+        traceback.print_exc()
         return jsonify({"message": "Erro ao atualizar dispositivo"}), 500
+    finally:
+        if cursor: cursor.close()
+        if conn and conn.is_connected(): conn.close()
 
 @app.route('/devices/<int:device_id>', methods=['DELETE'])
 def delete_device(device_id):
+    # ... (seu código como estava, parece OK) ...
+    conn = None
+    cursor = None
     try:
         conn = get_db_connection()
-        if not conn:
-            return jsonify({"message": "Erro interno no servidor (conexão DB)"}), 500
-        
+        if not conn: return jsonify({"message": "Erro interno no servidor (conexão DB)"}), 500
         cursor = conn.cursor()
-
-        # Verificar se o dispositivo existe antes de tentar deletar
         cursor.execute("SELECT ID_Dispositivo FROM Dispositivo WHERE ID_Dispositivo = %s", (device_id,))
         device = cursor.fetchone()
         if not device:
             cursor.close()
             conn.close()
             return jsonify({"message": "Dispositivo não encontrado para remoção"}), 404
-            
-        # As FKs com ON DELETE CASCADE (como em InterfaceRede, LogStatusDispositivo)
-        # cuidarão de remover os registros relacionados automaticamente.
-        # Para FKs com ON DELETE SET NULL (como em Alerta), o ID será setado para NULL.
         cursor.execute("DELETE FROM Dispositivo WHERE ID_Dispositivo = %s", (device_id,))
         conn.commit()
-        
-        # rowcount pode verificar se a deleção afetou alguma linha
-        if cursor.rowcount > 0:
-            message = "Dispositivo removido com sucesso!"
-        else:
-            # Isso não deveria acontecer se a verificação acima encontrou o dispositivo, mas é uma checagem extra.
-            message = "Dispositivo não encontrado ou não pôde ser removido."
-            
-        cursor.close()
-        conn.close()
-        
-        return jsonify({"message": message}), 200 # Ou 204 No Content se preferir não retornar corpo
-
+        message = "Dispositivo removido com sucesso!" if cursor.rowcount > 0 else "Dispositivo não encontrado ou não pôde ser removido."
+        return jsonify({"message": message}), 200
     except Exception as e:
-        print(f"Erro em /devices/<id> (DELETE): {e}")
-        if 'conn' in locals() and conn and conn.is_connected():
-            if 'cursor' in locals() and cursor: cursor.close()
-            conn.close()
+        if conn: conn.rollback()
+        print(f"Erro em DELETE /devices/<id>: {e}")
         return jsonify({"message": "Erro ao remover dispositivo"}), 500
+    finally:
+        if cursor: cursor.close()
+        if conn and conn.is_connected(): conn.close()
     
 @app.route('/fabricantes', methods=['GET'])
 def get_fabricantes():
+    # ... (seu código como estava, parece OK) ...
     try:
         conn = get_db_connection()
         if not conn: return jsonify({"message": "Erro de conexão DB"}), 500
@@ -678,13 +595,13 @@ def get_fabricantes():
 
 @app.route('/sistemasoperacionais', methods=['GET'])
 def get_sistemas_operacionais():
+    # ... (seu código como estava, parece OK) ...
     try:
         conn = get_db_connection()
         if not conn: return jsonify({"message": "Erro de conexão DB"}), 500
         cursor = conn.cursor(dictionary=True)
         cursor.execute("SELECT ID_SistemaOperacional, Nome, Versao FROM SistemaOperacional ORDER BY Nome ASC, Versao ASC")
         sistemas = cursor.fetchall()
-        # Formatar nome com versão para exibição
         for so in sistemas:
             so['NomeCompleto'] = f"{so['Nome']} {so['Versao']}" if so['Versao'] else so['Nome']
         cursor.close()
@@ -696,6 +613,7 @@ def get_sistemas_operacionais():
 
 @app.route('/tiposdispositivo', methods=['GET'])
 def get_tipos_dispositivo():
+    # ... (seu código como estava, parece OK) ...
     try:
         conn = get_db_connection()
         if not conn: return jsonify({"message": "Erro de conexão DB"}), 500
@@ -708,9 +626,154 @@ def get_tipos_dispositivo():
     except Exception as e:
         print(f"Erro em /tiposdispositivo: {e}")
         return jsonify({"message": "Erro ao buscar tipos de dispositivo"}), 500
+    
+@app.route('/api/discovery/discovered-ips/<int:id_ip_descoberto>/status', methods=['PUT'])
+def update_discovered_ip_status(id_ip_descoberto):
+    # ... (seu código como estava, parece OK) ...
+    try:
+        data = request.get_json()
+        novo_status = data.get('status')
+        if not novo_status: return jsonify({"message": "Novo status não fornecido"}), 400
+        conn = get_db_connection()
+        if not conn: return jsonify({"message": "Erro interno no servidor (conexão DB)"}), 500
+        cursor = conn.cursor()
+        query = "UPDATE IPsDescobertos SET StatusResolucao = %s WHERE ID_IPDescoberto = %s"
+        cursor.execute(query, (novo_status, id_ip_descoberto))
+        conn.commit()
+        if cursor.rowcount == 0:
+            cursor.close()
+            conn.close()
+            return jsonify({"message": "IP Descoberto não encontrado ou status já era o mesmo"}), 404
+        cursor.close()
+        conn.close()
+        return jsonify({"message": f"Status do IP Descoberto ID {id_ip_descoberto} atualizado para '{novo_status}'"}), 200
+    except Exception as e:
+        print(f"Erro em /api/discovery/discovered-ips/<id>/status: {e}")
+        if 'conn' in locals() and conn and conn.is_connected():
+            if 'cursor' in locals() and cursor: cursor.close()
+            conn.close()
+        return jsonify({"message": "Erro ao atualizar status do IP descoberto"}), 500
+    
+@app.route('/api/discovery/scan-ip-details', methods=['POST'])
+def scan_ip_details():
+    data = request.get_json()
+    ip_address = data.get('ip_address')
+    id_ip_descoberto = data.get('id_ip_descoberto')
 
+    if not ip_address or not id_ip_descoberto:
+        return jsonify({"message": "Endereço IP ou ID do IP Descoberto não fornecido"}), 400
+
+    print(f"BACKEND: Iniciando varredura Nmap detalhada para o IP: {ip_address} (ID DB: {id_ip_descoberto})")
+    nm = None
+    try:
+        nm = nmap.PortScanner()
+        nmap_args = '-sV -T4 -Pn' 
+        if os.getenv('NMAP_USE_OS_DETECTION', 'false').lower() == 'true':
+            nmap_args += ' -O --version-intensity 5'
+
+        print(f"BACKEND: Executando Nmap com argumentos: '{nmap_args}' no IP: {ip_address}")
+        nm.scan(ip_address, arguments=nmap_args)
+
+        hostname_nmap = ip_address 
+        mac_address = None
+        os_details_str = None 
+        open_ports_list = []
+        raw_nmap_output = "Nenhum host encontrado por Nmap ou IP não respondeu à varredura detalhada."
+
+        # --- INÍCIO DA CORREÇÃO APLICADA ---
+        scanned_hosts = nm.all_hosts() 
+        print(f"BACKEND: Hosts escaneados por Nmap: {scanned_hosts}")
+
+        if scanned_hosts: 
+            host_key = scanned_hosts[0] 
+            
+            if host_key in nm: 
+                host_data = nm[host_key]
+                raw_nmap_output = nm.csv() 
+                print(f"BACKEND: Resultado Nmap para {host_key}: {host_data.state()}")
+
+                if host_data.hostnames():
+                    for h_entry in host_data.hostnames():
+                        if h_entry.get('name') and h_entry.get('type') in ['PTR', 'user']:
+                            hostname_nmap = h_entry['name']
+                            break
+                    if hostname_nmap == ip_address and host_data.hostnames() and host_data.hostnames()[0].get('name'):
+                        hostname_nmap = host_data.hostnames()[0]['name']
+                
+                if 'mac' in host_data.get('addresses', {}): 
+                    mac_address = host_data['addresses']['mac'].upper()
+                
+                if 'osmatch' in host_data and host_data['osmatch']:
+                    best_os_match = sorted(host_data['osmatch'], key=lambda x: int(x['accuracy']), reverse=True)[0]
+                    os_details_str = best_os_match.get('name', 'N/D')
+                
+                for proto in host_data.all_protocols():
+                    if proto in ['tcp', 'udp']:
+                        lport = list(host_data[proto].keys())
+                        lport.sort(key=int)
+                        for port in lport:
+                            port_info = host_data[proto][port]
+                            if port_info['state'] == 'open':
+                                service_name = port_info.get('name', '')
+                                product = port_info.get('product', '')
+                                version = port_info.get('version', '')
+                                service_details = f"{service_name} ({product} {version})".replace("()","").replace("( )","").strip()
+                                open_ports_list.append(f"{port}/{proto} - {service_details if service_details else 'Serviço Desconhecido'}")
+            else:
+                print(f"BACKEND: Chave do host '{host_key}' (de nm.all_hosts()) não encontrada nos resultados do Nmap.")
+        else:
+            print(f"BACKEND: Nenhum host retornado por nm.all_hosts() para o IP {ip_address}.")
+        # --- FIM DA CORREÇÃO APLICADA ---
+        
+        conn_db = get_db_connection()
+        if not conn_db: return jsonify({"message": "Erro de conexão DB ao salvar detalhes Nmap"}), 500
+        cursor_db = conn_db.cursor() # cursor_db estava faltando ser definido aqui no seu código original
+        
+        update_query = """
+        UPDATE IPsDescobertos 
+        SET NomeHostResolvido = COALESCE(%s, NomeHostResolvido), 
+            MAC_Address_Estimado = %s, 
+            OS_Estimado = %s, 
+            Portas_Abertas = %s,
+            DetalhesVarreduraExtra = %s, 
+            StatusResolucao = %s,
+            DataUltimaDeteccao = CURRENT_TIMESTAMP 
+        WHERE ID_IPDescoberto = %s
+        """
+        ports_str = "\n".join(open_ports_list) if open_ports_list else None
+        final_hostname_to_save = hostname_nmap if hostname_nmap and hostname_nmap != ip_address else None
+
+        cursor_db.execute(update_query, (
+            final_hostname_to_save,
+            mac_address, 
+            os_details_str if os_details_str and os_details_str != 'N/D' else None,
+            ports_str, 
+            raw_nmap_output,
+            'Analisado', 
+            id_ip_descoberto
+        ))
+        conn_db.commit()
+        cursor_db.close()
+        conn_db.close()
+
+        return jsonify({
+            "message": f"Varredura detalhada para {ip_address} concluída.",
+            "data": { 
+                "id_ip_descoberto": id_ip_descoberto, "ip_address": ip_address,
+                "hostname_nmap": hostname_nmap, "mac_address_estimado": mac_address,
+                "os_estimado": os_details_str, "portas_abertas": open_ports_list,
+                "status_resolucao": "Analisado"
+            }
+        }), 200
+
+    except nmap.PortScannerError as e_nmap:
+        print(f"Erro do Nmap ao escanear {ip_address}: {str(e_nmap)}")
+        return jsonify({"message": f"Erro ao executar Nmap: {str(e_nmap)}. Verifique se Nmap está instalado e no PATH, e se o script tem permissões (para -O)."}), 500
+    except Exception as e:
+        print(f"Erro ao escanear detalhes do IP {ip_address}: {e}")
+        import traceback
+        traceback.print_exc() 
+        return jsonify({"message": "Erro interno ao escanear detalhes do IP."}), 500
     
 if __name__ == '__main__':
-    # O debug=True é ótimo para desenvolvimento, mas NÃO use em produção.
-    # O Flask irá pegar a configuração de debug do .env se FLASK_DEBUG=True estiver lá.
     app.run(debug=(os.getenv('FLASK_DEBUG', 'False').lower() == 'true'))
