@@ -56,20 +56,18 @@ document.addEventListener('DOMContentLoaded', function() {
                 createCell(ipInfo.DataUltimaDeteccao ? new Date(ipInfo.DataUltimaDeteccao).toLocaleString('pt-BR') : 'N/D');
 
                 const statusCell = createCell(ipInfo.StatusResolucao);
-                // Você pode adicionar classes CSS para diferentes status aqui se desejar
-                // if (ipInfo.StatusResolucao === 'Novo') statusCell.classList.add('status-novo');
-
                 const actionsCell = row.insertCell();
+
                 actionsCell.innerHTML = `
-                <button class="action-link btn-icon" title="Analisar Detalhes" data-id="<span class="math-inline">
-                    <i class="fas fa-search-plus"></i>
-                </button>
-                <button class="action-link btn-icon btn-success-icon" title="Adicionar" data-id="<span class="math-inline">
-                    <i class="fas fa-plus-circle"></i>
-                </button>
-                <button class="action-link btn-icon btn-danger-icon" title="Ignorar" data-id="<span class="math-inline">
-                    <i class="fas fa-ban"></i>
-                </button>
+                 <button class="action-link btn-icon" title="Analisar Detalhes" data-id="${ipInfo.ID_IPDescoberto}" data-ip="${ipInfo.EnderecoIP}" data-action="scan-details">
+                        <i class="fas fa-search-plus"></i>
+                    </button>
+                    <button class="action-link btn-icon btn-success-icon" title="Inventariar" data-id="${ipInfo.ID_IPDescoberto}" data-ip="${ipInfo.EnderecoIP}" data-action="inventory">
+                        <i class="fas fa-plus-circle"></i>
+                    </button>
+                    <button class="action-link btn-icon btn-danger-icon" title="Ignorar" data-id="${ipInfo.ID_IPDescoberto}" data-ip="${ipInfo.EnderecoIP}" data-action="ignore">
+                        <i class="fas fa-ban"></i>
+                    </button>
             `;
             });
             discoveredIpsFooter.innerHTML = `<span>Exibindo ${discoveredIPs.length} IPs descobertos.</span>`;
@@ -117,28 +115,164 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     // Placeholder para ações nos IPs descobertos (delegação de eventos)
-    if(discoveredIpsTbody) {
-        discoveredIpsTbody.addEventListener('click', function(event) {
-            const target = event.target;
-            if (target.classList.contains('action-link') && target.dataset.action) {
-                const ipId = target.dataset.id;
-                const ipAddress = target.dataset.ip;
-                const action = target.dataset.action;
+if (discoveredIpsTbody) {
+        discoveredIpsTbody.addEventListener('click', async function(event) {
+            const clickedElement = event.target; // O elemento que foi realmente clicado
+            console.log("TBODY CLICK: Elemento clicado:", clickedElement); // LOG A: Veja o que foi clicado
+
+            // Tenta encontrar o botão de ação mais próximo, subindo na árvore DOM
+            // Isso ajuda se o clique foi no ícone <i> dentro do <button>
+            const actionButton = clickedElement.closest('.action-link'); 
+            console.log("TBODY CLICK: Botão de ação encontrado (closest):", actionButton); // LOG B: Veja se encontrou o botão
+
+            if (actionButton && actionButton.dataset.action) { // Verifica se actionButton foi encontrado e tem data-action
+                event.preventDefault(); // Mova o preventDefault para cá, após confirmar que é um link de ação
+                
+                const ipId = actionButton.dataset.id;
+                const ipAddress = actionButton.dataset.ip;
+                const action = actionButton.dataset.action;
+                console.log("TBODY CLICK: Ação:", action, "ipId:", ipId, "ipAddress:", ipAddress); // LOG C: Veja os dados extraídos
 
                 if (action === 'scan-details') {
-                    alert(`Ação: Analisar Detalhes para IP ID: ${ipId}, Endereço: ${ipAddress} (implementar)`);
-                    // TODO: Chamar backend para varredura detalhada deste IP
+                    console.log(`SCAN DETAILS ACTION: Iniciando para ipId: ${ipId}, ipAddress: ${ipAddress}`);
+                    
+                    const currentActionButton = actionButton; // Usa actionButton, que é o <button>
+                    const originalButtonContent = currentActionButton.innerHTML; 
+
+                    currentActionButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i>'; // Modifica o botão
+                    currentActionButton.disabled = true; // Desabilita o botão
+
+                    if (typeof ipAddress === 'undefined' || ipAddress === null || ipAddress.trim() === "") {
+                        console.error("SCAN DETAILS ACTION: ipAddress é indefinido ou vazio.");
+                        alert("Erro: Endereço IP não encontrado para este item. Não é possível analisar.");
+                        currentActionButton.innerHTML = originalButtonContent; // Restaura o botão
+                        currentActionButton.disabled = false; // Reabilita o botão
+                        return; 
+                    }
+
+                    try {
+                        const response = await fetch(`http://127.0.0.1:5000/api/discovery/scan-ip-details`, {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json'
+                            },
+                            body: JSON.stringify({ 
+                                ip_address: ipAddress,
+                                id_ip_descoberto: ipId 
+                            })
+                        });
+
+                        const result = await response.json();
+                        if (response.ok) {
+                            alert(result.message || `Detalhes do IP ${ipAddress} analisados com sucesso.`);
+                            fetchAndDisplayDiscoveredIPs(); // Isso vai recriar o botão, então a restauração manual abaixo pode não ser necessária se der sucesso.
+                        } else {
+                            alert(`Erro ao analisar detalhes: ${result.message || response.statusText}`);
+                            currentActionButton.innerHTML = originalButtonContent; // Restaura o botão
+                            currentActionButton.disabled = false; // Reabilita o botão
+                        }
+                    } catch (error) {
+                        console.error('SCAN DETAILS ACTION: Erro durante a operação fetch/POST:', error);
+                        alert('Erro de comunicação com o servidor ao tentar analisar detalhes.');
+                        currentActionButton.innerHTML = originalButtonContent; // Restaura o botão
+                        currentActionButton.disabled = false; // Reabilita o botão
+                    }
+
                 } else if (action === 'inventory') {
-                    alert(`Ação: Inventariar IP ID: ${ipId}, Endereço: ${ipAddress} (implementar - abrir modal de adicionar dispositivo pré-preenchido?)`);
-                    // TODO: Abrir modal de Adicionar Dispositivo, talvez pré-preenchendo com o IP
-                    // ou com dados de uma varredura detalhada prévia.
+                    console.log(`VARREDURA_HANDLER: Ação 'Inventariar' clicada para ipId: ${ipId}, ipAddress: ${ipAddress}`); // LOG V1
+                    
+                    const currentActionButton = actionButton; // Usamos actionButton para modificar o botão
+                    const originalButtonContent = currentActionButton.innerHTML; // Salva o ícone original
+
+                    currentActionButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Processando...'; // Muda o conteúdo do BOTÃO
+                    currentActionButton.disabled = true; // Desabilita o BOTÃO
+
+                    try {
+                        // ... (resto da sua lógica fetch, sessionStorage.setItem, window.location.href) ...
+                        // Exemplo:
+                        const response = await fetch(`http://127.0.0.1:5000/api/discovery/discovered-ips/${ipId}`);
+                        if (!response.ok) {
+                            const errData = await response.json().catch(() => ({}));
+                            alert(`Erro ao buscar detalhes do IP descoberto: ${errData.message || response.statusText}`);
+                            currentActionButton.innerHTML = originalButtonContent; // Restaura o botão
+                            currentActionButton.disabled = false;
+                            return;
+                        }
+                        const discoveredIpDetails = await response.json();
+                        console.log("VARREDURA_HANDLER: Detalhes do IP Descoberto recebidos do backend:", discoveredIpDetails); // LOG V2 (coloquei aqui para referência)
+
+                        const prefillData = {
+                            id_ip_descoberto: discoveredIpDetails.ID_IPDescoberto,
+                            nomeHost: discoveredIpDetails.NomeHostResolvido || discoveredIpDetails.EnderecoIP,
+                            enderecoIP: discoveredIpDetails.EnderecoIP,
+                            enderecoMAC: discoveredIpDetails.MAC_Address_Estimado,
+                            osEstimado: discoveredIpDetails.OS_Estimado,
+                            descricaoInicial: `Dispositivo descoberto com IP ${discoveredIpDetails.EnderecoIP}. OS Estimado: ${discoveredIpDetails.OS_Estimado || 'N/D'}. MAC: ${discoveredIpDetails.MAC_Address_Estimado || 'N/D'}.`
+                        };
+                        
+                        console.log("VARREDURA_HANDLER: Dados a serem salvos no sessionStorage (prefillData):", prefillData); // LOG V3
+                        sessionStorage.setItem('prefillDeviceData', JSON.stringify(prefillData));
+                        console.log("VARREDURA_HANDLER: Dados salvos no sessionStorage. Redirecionando para dispositivos.html..."); // LOG V4
+                        
+                        window.location.href = 'dispositivos.html';
+
+                    } catch (error) {
+                        console.error('VARREDURA_HANDLER: Erro ao preparar para inventariar IP:', error);
+                        alert('Erro de comunicação com o servidor ao preparar para inventariar.');
+                        currentActionButton.innerHTML = originalButtonContent; // Restaura o botão
+                        currentActionButton.disabled = false;
+                    }
+
                 } else if (action === 'ignore') {
-                    if (confirm(`Tem certeza que deseja ignorar o IP ${ipAddress} (ID: ${ipId})?`)) {
-                        alert(`Ação: Ignorar IP ID: ${ipId} (implementar - chamar backend para mudar status)`);
-                        // TODO: Chamar backend para mudar StatusResolucao para 'Ignorado' e recarregar lista
+                    console.log("IGNORE ACTION: Botão 'Ignorar' clicado e ação confirmada."); 
+                    console.log("  ID do IP a ignorar (ipId):", ipId);         // LOG 1.1
+                    console.log("  Endereço IP (ipAddress):", ipAddress);    // LOG 1.2
+
+                    if (confirm(`Tem certeza que deseja marcar o IP ${ipAddress} (ID: ${ipId}) como 'Ignorado'?`)) {
+                        console.log("IGNORE ACTION: Usuário confirmou a ação."); // LOG 2
+                        try {
+                            console.log(`IGNORE ACTION: Enviando requisição PUT para /api/discovery/discovered-ips/${ipId}/status`); // LOG 3
+                            
+                            const response = await fetch(`http://127.0.0.1:5000/api/discovery/discovered-ips/${ipId}/status`, {
+                                method: 'PUT',
+                                headers: {
+                                    'Content-Type': 'application/json'
+                                },
+                                body: JSON.stringify({ status: 'Ignorado' })
+                            });
+
+                            console.log("IGNORE ACTION: Resposta recebida do backend:", response); // LOG 4
+
+                            let result = {};
+                            try {
+                                result = await response.json();
+                                console.log("IGNORE ACTION: Resultado JSON parseado da resposta:", result); // LOG 5
+                            } catch (e) {
+                                console.error("IGNORE ACTION: Falha ao parsear resposta JSON ou resposta vazia.", e);
+                                if (!response.ok) {
+                                     result.message = `Erro do servidor (status ${response.status}) sem corpo JSON detalhado.`;
+                                }
+                            }
+                            
+                            if (response.ok) {
+                                console.log("IGNORE ACTION: Backend respondeu OK. Mensagem:", result.message); // LOG 6
+                                alert(result.message || 'Status do IP atualizado para Ignorado.');
+                                fetchAndDisplayDiscoveredIPs(); 
+                            } else {
+                                console.warn("IGNORE ACTION: Backend respondeu NÃO OK. Status:", response.status, "Mensagem:", result.message); // LOG 7
+                                alert(`Erro ao ignorar IP: ${result.message || `Falha com status ${response.status}`}`);
+                            }
+                        } catch (error) {
+                            console.error('IGNORE ACTION: Erro durante a operação fetch/PUT:', error); // LOG 8
+                            alert('Erro de comunicação com o servidor ao tentar ignorar o IP.');
+                        }
+                    } else {
+                        console.log("IGNORE ACTION: Usuário cancelou a ação."); // LOG 9
                     }
                 }
-            }
+            } else {
+            console.log("TBODY CLICK: actionButton foi encontrado, mas actionButton.dataset.action está indefinido ou vazio.");
+        }
         });
     }
 
