@@ -884,3 +884,85 @@
 2025-05-29 21:12:01,337 INFO     [root:process_discovered_ip:354] - PROCESS_IP (192.168.208.1): Hostname resolvido: dev-dk.mshome.net
 2025-05-29 21:12:01,352 INFO     [root:process_discovered_ip:429] - PROCESS_IP: Finalizado processamento para IP: 192.168.208.1
 2025-05-29 21:12:19,257 INFO     [root:_execute_actual_network_scan:1454] - SCAN_CORE (Agendada): Varredura de descoberta concluída. 1 IPs ativos encontrados e processados.
+2025-06-02 13:35:48,208 INFO     [root:setup_structured_logging:56] - ==================================================
+2025-06-02 13:35:48,209 INFO     [root:setup_structured_logging:57] - Logging Estruturado Configurado com Sucesso
+2025-06-02 13:35:48,209 INFO     [root:setup_structured_logging:58] - Logs serão salvos em 'app.log'
+2025-06-02 13:35:48,209 INFO     [root:setup_structured_logging:59] - ==================================================
+2025-06-02 13:35:48,281 INFO     [root:<module>:1639] - MAIN_APP: Agendador não está rodando. Iniciando...
+2025-06-02 13:35:48,282 INFO     [root:update_scheduled_scan:1478] - SCHEDULER_UPDATE: Tentando atualizar tarefa de varredura agendada...
+2025-06-02 13:35:48,698 INFO     [root:update_scheduled_scan:1494] - SCHEDULER_UPDATE: Agendando nova varredura para cada 1 minutos.
+2025-06-02 13:35:48,702 INFO     [root:<module>:1643] - MAIN_APP: Agendador iniciado com sucesso.
+2025-06-02 13:35:48,703 INFO     [root:<module>:1652] - Iniciando servidor Flask em modo DEBUG.
+2025-06-02 13:35:48,757 INFO     [werkzeug:_log:97] - [31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on http://127.0.0.1:5000
+2025-06-02 13:35:48,758 INFO     [werkzeug:_log:97] - [33mPress CTRL+C to quit[0m
+2025-06-02 13:35:48,761 INFO     [werkzeug:_log:97] -  * Restarting with stat
+2025-06-02 13:35:49,384 INFO     [root:setup_structured_logging:56] - ==================================================
+2025-06-02 13:35:49,384 INFO     [root:setup_structured_logging:57] - Logging Estruturado Configurado com Sucesso
+2025-06-02 13:35:49,384 INFO     [root:setup_structured_logging:58] - Logs serão salvos em 'app.log'
+2025-06-02 13:35:49,385 INFO     [root:setup_structured_logging:59] - ==================================================
+2025-06-02 13:35:49,410 INFO     [root:<module>:1639] - MAIN_APP: Agendador não está rodando. Iniciando...
+2025-06-02 13:35:49,411 INFO     [root:update_scheduled_scan:1478] - SCHEDULER_UPDATE: Tentando atualizar tarefa de varredura agendada...
+2025-06-02 13:35:49,513 INFO     [root:update_scheduled_scan:1494] - SCHEDULER_UPDATE: Agendando nova varredura para cada 1 minutos.
+2025-06-02 13:35:49,516 INFO     [root:<module>:1643] - MAIN_APP: Agendador iniciado com sucesso.
+2025-06-02 13:35:49,517 INFO     [root:<module>:1652] - Iniciando servidor Flask em modo DEBUG.
+2025-06-02 13:35:49,529 WARNING  [werkzeug:_log:97] -  * Debugger is active!
+2025-06-02 13:35:49,534 INFO     [werkzeug:_log:97] -  * Debugger PIN: 774-382-556
+2025-06-02 13:36:08,711 INFO     [root:scheduled_scan_job:1459] - SCHEDULER_JOB: Verificando se a varredura automática deve ser executada...
+2025-06-02 13:36:08,734 INFO     [root:scheduled_scan_job:1466] - SCHEDULER_JOB: Varredura automática ATIVADA. Iniciando varredura para faixas: 192.168.208.1-192.168.208.10
+2025-06-02 13:36:08,734 INFO     [root:_execute_actual_network_scan:1358] - SCAN_CORE (Agendada): Iniciando varredura para faixas: 192.168.208.1-192.168.208.10
+2025-06-02 13:36:08,735 INFO     [root:_execute_actual_network_scan:1437] - SCAN_CORE (Agendada): Total de IPs únicos a serem escaneados: 10
+2025-06-02 13:36:09,520 INFO     [root:scheduled_scan_job:1459] - SCHEDULER_JOB: Verificando se a varredura automática deve ser executada...
+2025-06-02 13:36:09,546 INFO     [root:scheduled_scan_job:1466] - SCHEDULER_JOB: Varredura automática ATIVADA. Iniciando varredura para faixas: 192.168.208.1-192.168.208.10
+2025-06-02 13:36:09,546 INFO     [root:_execute_actual_network_scan:1358] - SCAN_CORE (Agendada): Iniciando varredura para faixas: 192.168.208.1-192.168.208.10
+2025-06-02 13:36:09,547 INFO     [root:_execute_actual_network_scan:1437] - SCAN_CORE (Agendada): Total de IPs únicos a serem escaneados: 10
+2025-06-02 13:36:09,789 INFO     [root:process_discovered_ip:349] - PROCESS_IP: Iniciando processamento para IP: 192.168.208.1
+2025-06-02 13:36:09,791 INFO     [root:process_discovered_ip:354] - PROCESS_IP (192.168.208.1): Hostname resolvido: dev-dk.mshome.net
+2025-06-02 13:36:09,825 INFO     [root:process_discovered_ip:429] - PROCESS_IP: Finalizado processamento para IP: 192.168.208.1
+2025-06-02 13:36:10,205 INFO     [werkzeug:_log:97] - 127.0.0.1 - - [02/Jun/2025 13:36:10] "OPTIONS /login HTTP/1.1" 200 -
+2025-06-02 13:36:10,484 INFO     [root:registrar_log_auditoria:71] - AUDIT_DB_LOG: UserID: 2, User: nailton.colares, Action: LOGIN_SUCESSO, IP: 127.0.0.1
+2025-06-02 13:36:10,511 INFO     [root:login:615] - Login bem-sucedido para usuário 'nailton.colares' do IP 127.0.0.1.
+2025-06-02 13:36:10,517 INFO     [werkzeug:_log:97] - 127.0.0.1 - - [02/Jun/2025 13:36:10] "POST /login HTTP/1.1" 200 -
+2025-06-02 13:36:10,585 INFO     [root:process_discovered_ip:349] - PROCESS_IP: Iniciando processamento para IP: 192.168.208.1
+2025-06-02 13:36:10,588 INFO     [root:process_discovered_ip:354] - PROCESS_IP (192.168.208.1): Hostname resolvido: dev-dk.mshome.net
+2025-06-02 13:36:10,603 INFO     [root:process_discovered_ip:429] - PROCESS_IP: Finalizado processamento para IP: 192.168.208.1
+2025-06-02 13:36:11,708 INFO     [werkzeug:_log:97] - 127.0.0.1 - - [02/Jun/2025 13:36:11] "GET /api/dashboard/status-distribution HTTP/1.1" 200 -
+2025-06-02 13:36:11,709 INFO     [werkzeug:_log:97] - 127.0.0.1 - - [02/Jun/2025 13:36:11] "GET /api/dashboard/os-distribution HTTP/1.1" 200 -
+2025-06-02 13:36:11,719 INFO     [werkzeug:_log:97] - 127.0.0.1 - - [02/Jun/2025 13:36:11] "GET /api/dashboard/recent-alerts HTTP/1.1" 200 -
+2025-06-02 13:36:11,729 INFO     [werkzeug:_log:97] - 127.0.0.1 - - [02/Jun/2025 13:36:11] "GET /api/dashboard/summary HTTP/1.1" 200 -
+2025-06-02 13:36:16,307 INFO     [werkzeug:_log:97] - 127.0.0.1 - - [02/Jun/2025 13:36:16] "OPTIONS /devices HTTP/1.1" 200 -
+2025-06-02 13:36:16,391 INFO     [werkzeug:_log:97] - 127.0.0.1 - - [02/Jun/2025 13:36:16] "GET /devices HTTP/1.1" 200 -
+2025-06-02 13:36:21,126 INFO     [werkzeug:_log:97] - 127.0.0.1 - - [02/Jun/2025 13:36:21] "OPTIONS /api/alerts HTTP/1.1" 200 -
+2025-06-02 13:36:21,169 INFO     [werkzeug:_log:97] - 127.0.0.1 - - [02/Jun/2025 13:36:21] "GET /api/alerts HTTP/1.1" 200 -
+2025-06-02 13:36:27,763 INFO     [root:_execute_actual_network_scan:1454] - SCAN_CORE (Agendada): Varredura de descoberta concluída. 1 IPs ativos encontrados e processados.
+2025-06-02 13:36:28,261 INFO     [root:_execute_actual_network_scan:1454] - SCAN_CORE (Agendada): Varredura de descoberta concluída. 1 IPs ativos encontrados e processados.
+2025-06-02 13:36:30,723 INFO     [werkzeug:_log:97] - 127.0.0.1 - - [02/Jun/2025 13:36:30] "GET /devices HTTP/1.1" 200 -
+2025-06-02 13:36:33,073 INFO     [werkzeug:_log:97] - 127.0.0.1 - - [02/Jun/2025 13:36:33] "GET /api/settings/scan-config HTTP/1.1" 200 -
+2025-06-02 13:36:37,297 INFO     [werkzeug:_log:97] - 127.0.0.1 - - [02/Jun/2025 13:36:37] "OPTIONS /devices HTTP/1.1" 200 -
+2025-06-02 13:36:37,340 INFO     [werkzeug:_log:97] - 127.0.0.1 - - [02/Jun/2025 13:36:37] "GET /devices HTTP/1.1" 200 -
+2025-06-02 13:36:42,319 INFO     [werkzeug:_log:97] - 127.0.0.1 - - [02/Jun/2025 13:36:42] "OPTIONS /devices/23 HTTP/1.1" 200 -
+2025-06-02 13:36:42,346 INFO     [werkzeug:_log:97] - 127.0.0.1 - - [02/Jun/2025 13:36:42] "GET /devices/23 HTTP/1.1" 200 -
+2025-06-02 13:36:42,371 INFO     [werkzeug:_log:97] - 127.0.0.1 - - [02/Jun/2025 13:36:42] "GET /fabricantes HTTP/1.1" 200 -
+2025-06-02 13:36:42,397 INFO     [werkzeug:_log:97] - 127.0.0.1 - - [02/Jun/2025 13:36:42] "GET /sistemasoperacionais HTTP/1.1" 200 -
+2025-06-02 13:36:42,426 INFO     [werkzeug:_log:97] - 127.0.0.1 - - [02/Jun/2025 13:36:42] "GET /tiposdispositivo HTTP/1.1" 200 -
+2025-06-02 13:36:47,770 INFO     [werkzeug:_log:97] - 127.0.0.1 - - [02/Jun/2025 13:36:47] "OPTIONS /devices/23 HTTP/1.1" 200 -
+2025-06-02 13:36:47,817 INFO     [root:registrar_log_auditoria:71] - AUDIT_DB_LOG: UserID: 2, User: nailton.colares, Action: DISPOSITIVO_EDITADO, IP: 127.0.0.1
+2025-06-02 13:36:47,839 INFO     [werkzeug:_log:97] - 127.0.0.1 - - [02/Jun/2025 13:36:47] "PUT /devices/23 HTTP/1.1" 200 -
+2025-06-02 13:36:47,853 INFO     [werkzeug:_log:97] - 127.0.0.1 - - [02/Jun/2025 13:36:47] "OPTIONS /devices HTTP/1.1" 200 -
+2025-06-02 13:36:47,884 INFO     [werkzeug:_log:97] - 127.0.0.1 - - [02/Jun/2025 13:36:47] "GET /devices HTTP/1.1" 200 -
+2025-06-02 13:37:08,707 INFO     [root:scheduled_scan_job:1459] - SCHEDULER_JOB: Verificando se a varredura automática deve ser executada...
+2025-06-02 13:37:08,724 INFO     [root:scheduled_scan_job:1466] - SCHEDULER_JOB: Varredura automática ATIVADA. Iniciando varredura para faixas: 192.168.208.1-192.168.208.10
+2025-06-02 13:37:08,725 INFO     [root:_execute_actual_network_scan:1358] - SCAN_CORE (Agendada): Iniciando varredura para faixas: 192.168.208.1-192.168.208.10
+2025-06-02 13:37:08,726 INFO     [root:_execute_actual_network_scan:1437] - SCAN_CORE (Agendada): Total de IPs únicos a serem escaneados: 10
+2025-06-02 13:37:09,517 INFO     [root:scheduled_scan_job:1459] - SCHEDULER_JOB: Verificando se a varredura automática deve ser executada...
+2025-06-02 13:37:09,532 INFO     [root:scheduled_scan_job:1466] - SCHEDULER_JOB: Varredura automática ATIVADA. Iniciando varredura para faixas: 192.168.208.1-192.168.208.10
+2025-06-02 13:37:09,532 INFO     [root:_execute_actual_network_scan:1358] - SCAN_CORE (Agendada): Iniciando varredura para faixas: 192.168.208.1-192.168.208.10
+2025-06-02 13:37:09,533 INFO     [root:_execute_actual_network_scan:1437] - SCAN_CORE (Agendada): Total de IPs únicos a serem escaneados: 10
+2025-06-02 13:37:09,770 INFO     [root:process_discovered_ip:349] - PROCESS_IP: Iniciando processamento para IP: 192.168.208.1
+2025-06-02 13:37:09,771 INFO     [root:process_discovered_ip:354] - PROCESS_IP (192.168.208.1): Hostname resolvido: dev-dk.mshome.net
+2025-06-02 13:37:09,788 INFO     [root:process_discovered_ip:429] - PROCESS_IP: Finalizado processamento para IP: 192.168.208.1
+2025-06-02 13:37:10,565 INFO     [root:process_discovered_ip:349] - PROCESS_IP: Iniciando processamento para IP: 192.168.208.1
+2025-06-02 13:37:10,566 INFO     [root:process_discovered_ip:354] - PROCESS_IP (192.168.208.1): Hostname resolvido: dev-dk.mshome.net
+2025-06-02 13:37:10,586 INFO     [root:process_discovered_ip:429] - PROCESS_IP: Finalizado processamento para IP: 192.168.208.1
+2025-06-02 13:37:25,751 INFO     [root:_execute_actual_network_scan:1454] - SCAN_CORE (Agendada): Varredura de descoberta concluída. 1 IPs ativos encontrados e processados.
+2025-06-02 13:37:25,751 INFO     [root:_execute_actual_network_scan:1454] - SCAN_CORE (Agendada): Varredura de descoberta concluída. 1 IPs ativos encontrados e processados.
