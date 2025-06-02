@@ -6,6 +6,7 @@
     <title>NILDS - Dashboard</title>
     <link rel="stylesheet" href="../assets/src/css/style.css">
     <link rel="website icon" type="png" href="../assets/images/icone.png">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
     <div class="container">
@@ -31,43 +32,35 @@
             <section class="summary-cards">
                 <div class="card">
                     <h3>Total de Dispositivos</h3>
-                    <p>125</p>
-                </div>
+                    <p id="totalDevices">...</p> </div>
                 <div class="card">
                     <h3>Online</h3>
-                    <p>110</p>
-                </div>
+                    <p id="onlineDevices">...</p> </div>
                 <div class="card">
                     <h3>Offline</h3>
-                    <p>15</p>
-                </div>
+                    <p id="offlineDevices">...</p> </div>
                 <div class="card">
                     <h3>Novos Alertas</h3>
-                    <p>3</p>
-                </div>
+                    <p id="newAlerts">...</p> </div>
             </section>
+
             <section class="charts-area">
-                <div class="chart-placeholder">
+                <div class="chart-placeholder card-style"> 
                     <h4>Distribuição de SO</h4>
-                    <p>(Gráfico de Pizza/Barras aqui)</p>
-                    <p style="font-size:0.8em; color:#888;">Ex: Windows: 60%, Linux: 25%, macOS: 10%, Outros: 5%</p>
+                    <canvas id="osDistributionChart"></canvas> 
                 </div>
-                <div class="chart-placeholder">
-                    <h4>Status da Rede ao Longo do Tempo</h4>
-                    <p>(Gráfico de Linha aqui)</p>
-                     <p style="font-size:0.8em; color:#888;">Ex: Dispositivos Online vs Offline nas últimas 24h</p>
+                <div class="chart-placeholder card-style">
+                    <h4>Distribuição de Status</h4>
+                    <canvas id="statusDistributionChart"></canvas>
                 </div>
             </section>
-            <section class="recent-activity">
-                <h3>Atividade Recente / Alertas</h3>
-                <ul>
-                    <li><span class="alert-new">NOVO!</span> Novo dispositivo detectado: IP 192.168.1.105 (Unknown Device) - <a href="#">Verificar</a></li>
-                    <li><span class="alert-offline">OFFLINE!</span> Servidor 'SRV-WEB-01' (192.168.1.12) está offline.</li>
-                    <li><span class="alert-info">INFO:</span> Dispositivo 'PC-MARKETING-03' atualizou o SO para Windows 11.</li>
-                    <li><span class="alert-new">NOVO!</span> Novo dispositivo detectado: IP 192.168.1.108 (Smartphone Android) - <a href="#">Verificar</a></li>
+
+            <section class="recent-activity card-style"> <h3>Atividade Recente / Novos Alertas</h3>
+                <ul id="recentAlertsList"> <li>Carregando atividades recentes...</li>
                 </ul>
             </section>
         </main>
     </div>
+    <script src="../assets/src/js/index.js"></script>
 </body>
 </html>

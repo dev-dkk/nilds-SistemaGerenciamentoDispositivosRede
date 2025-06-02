@@ -63,29 +63,34 @@
                     </form>
                 </div>
 
-                <div id="tab-varredura" class="tab-content card-style">
-                    <h3>Configurações de Varredura de Rede</h3>
-                    <form class="settings-form">
+                <div id="tab-varredura" class="tab-content card-style"> <h3>Configurações de Varredura de Rede</h3>
+                    <form id="scanConfigForm"> 
                         <div class="form-group">
-                            <label for="ip-ranges">Faixas de IP para Varredura (separadas por vírgula):</label>
-                            <input type="text" id="ip-ranges" name="ip-ranges" value="192.168.1.0/24, 10.0.0.0/8">
+                            <label for="scanIpRanges">Faixas de IP para Varredura:</label>
+                            <textarea id="scanIpRanges" name="FaixasIP" rows="4" 
+                                    placeholder="Ex: 192.168.1.0/24&#10;10.0.0.1-10.0.0.254&#10;172.16.0.5"></textarea>
+                            <small class="form-text-muted">
+                                Digite uma faixa por linha ou separe múltiplas faixas por vírgula.
+                                Formatos aceitos: CIDR (ex: 192.168.1.0/24), intervalo (ex: 192.168.1.10-192.168.1.20 ou 192.168.1.10-50), ou IP único.
+                            </small>
                         </div>
                         <div class="form-group">
-                            <label for="scan-frequency">Frequência da Varredura:</label>
-                            <select id="scan-frequency" name="scan-frequency">
-                                <option value="30min">A cada 30 minutos</option>
-                                <option value="1hr">A cada 1 hora</option>
-                                <option value="daily">Diariamente às 02:00</option>
+                            <label for="scanFrequency">Frequência da Varredura:</label>
+                            <select id="scanFrequency" name="FrequenciaMinutos">
+                                <option value="1">A cada 1 minuto</option>
+                                <option value="30">A cada 30 minutos</option>
+                                <option value="60">A cada 1 hora</option>
+                                <option value="120">A cada 2 horas</option>
+                                <option value="360">A cada 6 horas</option>
+                                <option value="720">A cada 12 horas</option>
+                                <option value="1440">Diariamente (a cada 24 horas)</option>
+                                <option value="0">Manualmente apenas (via botão na página de Varredura)</option>
                             </select>
                         </div>
-                        <div class="form-group">
-                            <label for="discovery-method">Método de Descoberta:</label>
-                            <select id="discovery-method" name="discovery-method">
-                                <option value="ping_arp">Ping + ARP</option>
-                                <option value="snmp">SNMP (se disponível)</option>
-                                <option value="nmap">Varredura Nmap (Avançado)</option>
-                            </select>
+                        <div class="form-group checkbox-group"> <input type="checkbox" id="scanEnabled" name="VarreduraAtivada">
+                            <label for="scanEnabled" style="margin-bottom:0; margin-left: 5px;">Ativar Varredura Automática de Rede</label>
                         </div>
+                        <div id="scan-config-message" class="form-message-placeholder"></div>
                         <button type="submit" class="btn-primary">Salvar Configurações de Varredura</button>
                     </form>
                 </div>
@@ -151,5 +156,6 @@ document.addEventListener('DOMContentLoaded', function() {
     document.querySelector('.tab-button.active').click();
 });
 </script>
+<script src="../assets/src/js/config.js"></script>
 </body>
 </html>

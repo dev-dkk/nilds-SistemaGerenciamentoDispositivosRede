@@ -10,8 +10,8 @@ document.addEventListener('DOMContentLoaded', function() {
     const addDeviceModal = document.getElementById('addDeviceModal');
     const addDeviceForm = document.getElementById('addDeviceForm');
     const openAddDeviceModalButton = document.querySelector('.content header .actions button.btn-primary');
-    const addModalCloseButton = addDeviceModal.querySelector('.close-button'); // Renomeado para clareza
-    const addModalCancelButton = addDeviceModal.querySelector('.modal-footer button.btn-secondary'); // Renomeado para clareza
+    const addModalCloseButton = addDeviceModal.querySelector('.close-button');
+    const addModalCancelButton = addDeviceModal.querySelector('.modal-footer button.btn-secondary');
     const addDeviceMessageDiv = document.getElementById('add-device-message');
     const addFabricanteSelect = document.getElementById('add-fabricante');
     const addSoSelect = document.getElementById('add-so');
@@ -39,14 +39,12 @@ document.addEventListener('DOMContentLoaded', function() {
 
     function prefillAndOpenAddModal(data) {
         console.log("DEVICE HANDLER: Pré-preenchendo modal com dados:", data);
-        addDeviceForm.reset(); // Limpa o formulário primeiro
+        addDeviceForm.reset();
         addDeviceMessageDiv.textContent = '';
         addDeviceMessageDiv.className = 'form-message-placeholder';
 
-        // Pré-preenche os campos
         if (data.nomeHost) document.getElementById('add-nomeHost').value = data.nomeHost;
 
-        // Se você adicionou os campos de IP e MAC ao modal:
         if (document.getElementById('add-enderecoIP') && data.enderecoIP) {
             document.getElementById('add-enderecoIP').value = data.enderecoIP;
         }
@@ -54,35 +52,29 @@ document.addEventListener('DOMContentLoaded', function() {
             document.getElementById('add-enderecoMAC').value = data.enderecoMAC;
         }
 
-        // Coloca outras informações na descrição ou observações
         let descricao = data.descricaoInicial || '';
-        // if (data.osEstimado) { // Exemplo de como adicionar mais info
-        //     descricao += (descricao ? "\n" : "") + `SO Estimado (descoberta): ${data.osEstimado}`;
-        // }
-        document.getElementById('add-descricao').value = descricao; // Preenche a descrição
+        document.getElementById('add-descricao').value = descricao;
 
-        // Guarda o ID do IP descoberto para usar após salvar (ex: em um atributo do formulário)
         if (data.id_ip_descoberto) {
             addDeviceForm.dataset.idIpDescoberto = data.id_ip_descoberto; 
         } else {
-            delete addDeviceForm.dataset.idIpDescoberto; // Remove se não houver
+            delete addDeviceForm.dataset.idIpDescoberto;
         }
 
-        // Popula os selects (Fabricante, SO, Tipo)
         populateSelect(addFabricanteSelect, '/fabricantes', 'ID_Fabricante', 'Nome');
         populateSelect(addSoSelect, '/sistemasoperacionais', 'ID_SistemaOperacional', 'Nome', true);
         populateSelect(addTipoDispositivoSelect, '/tiposdispositivo', 'ID_TipoDispositivo', 'Nome');
 
-        addDeviceModal.style.display = 'block'; // Abre o modal
+        addDeviceModal.style.display = 'block';
     }
 
-    // Verifica sessionStorage ao carregar a página
     const prefillDataString = sessionStorage.getItem('prefillDeviceData');
     if (prefillDataString) {
         const prefillData = JSON.parse(prefillDataString);
         prefillAndOpenAddModal(prefillData);
-        sessionStorage.removeItem('prefillDeviceData'); // Limpa para não reabrir na próxima vez
+        sessionStorage.removeItem('prefillDeviceData');
     }
+    
     async function fetchAndDisplayDevices(searchTerm = '') {
         if (!deviceListTbody) {
             console.error("Elemento tbody com ID 'device-list-tbody' não foi encontrado!");
@@ -101,7 +93,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 method: 'GET',
                 headers: {
                     'Content-Type': 'application/json'
-                    // 'Authorization': 'Bearer ' + localStorage.getItem('authToken') 
                 }
             });
 
@@ -151,7 +142,7 @@ document.addEventListener('DOMContentLoaded', function() {
                         const dateObj = new Date(device.DataUltimaVarredura);
                         if (!isNaN(dateObj)) {
                            dataFormatada = dateObj.toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' });
-                        } else { dataFormatada = device.DataUltimaVarredura; } // Se não for data válida, mostra o original
+                        } else { dataFormatada = device.DataUltimaVarredura; }
                     } catch (e) {
                         console.warn("Erro ao formatar DataUltimaVarredura:", device.DataUltimaVarredura, e);
                         dataFormatada = device.DataUltimaVarredura;
@@ -199,8 +190,6 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     // --- EVENT LISTENERS PARA CONTROLES DE MODAIS (ABRIR/FECHAR) ---
-
-    // Abrir Modal de Adicionar Dispositivo
     if (openAddDeviceModalButton) {
         openAddDeviceModalButton.addEventListener('click', function() {
             console.log("Botão 'Adicionar Dispositivo' clicado - abrindo modal de adicionar.");
@@ -214,31 +203,13 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
-    // Fechar Modal de Adicionar
-    if (addModalCloseButton) {
-        addModalCloseButton.addEventListener('click', () => addDeviceModal.style.display = 'none');
-    }
-    if (addModalCancelButton) {
-        addModalCancelButton.addEventListener('click', () => addDeviceModal.style.display = 'none');
-    }
+    if (addModalCloseButton) { addModalCloseButton.addEventListener('click', () => addDeviceModal.style.display = 'none'); }
+    if (addModalCancelButton) { addModalCancelButton.addEventListener('click', () => addDeviceModal.style.display = 'none'); }
+    if (editModalCloseButton) { editModalCloseButton.addEventListener('click', () => editDeviceModal.style.display = 'none'); }
+    if (editModalCancelButton) { editModalCancelButton.addEventListener('click', () => editDeviceModal.style.display = 'none'); }
+    if (detailsModalCloseButton) { detailsModalCloseButton.addEventListener('click', () => deviceDetailsModal.style.display = 'none'); }
+    if (detailsModalCancelButton) { detailsModalCancelButton.addEventListener('click', () => deviceDetailsModal.style.display = 'none'); }
 
-    // Fechar Modal de Editar
-    if (editModalCloseButton) {
-        editModalCloseButton.addEventListener('click', () => editDeviceModal.style.display = 'none');
-    }
-    if (editModalCancelButton) {
-        editModalCancelButton.addEventListener('click', () => editDeviceModal.style.display = 'none');
-    }
-
-    // Fechar Modal de Detalhes
-    if (detailsModalCloseButton) {
-        detailsModalCloseButton.addEventListener('click', () => deviceDetailsModal.style.display = 'none');
-    }
-    if (detailsModalCancelButton) {
-        detailsModalCancelButton.addEventListener('click', () => deviceDetailsModal.style.display = 'none');
-    }
-
-    // Fechar qualquer modal clicando fora
     window.addEventListener('click', function(event) {
         if (event.target == addDeviceModal) addDeviceModal.style.display = 'none';
         if (event.target == editDeviceModal) editDeviceModal.style.display = 'none';
@@ -267,62 +238,68 @@ document.addEventListener('DOMContentLoaded', function() {
             formData.forEach((value, key) => {
                 if (key.startsWith('ID_') && value) {
                     deviceData[key] = parseInt(value, 10);
-                } else if (value.trim() !== "") { // Apenas inclui campos com valor (não vazios após trim)
+                } else if (value.trim() !== "") {
                     deviceData[key] = value.trim();
                 }
             });
             
-            // Opcional: adicionar campos nulos explicitamente se o backend precisar deles
-            // const allFields = ['NomeHost', 'Descricao', 'Modelo', ...];
-            // allFields.forEach(field => { if (!deviceData.hasOwnProperty(field) && !field.startsWith('ID_')) deviceData[field] = null; });
             console.log("ADD FORM: Data to be sent:", deviceData);
 
             try {
+                // --- INÍCIO DA CORREÇÃO ---
+                const token = localStorage.getItem('authToken');
+                if (!token) {
+                    alert("Sua sessão expirou. Faça login novamente.");
+                    window.location.href = 'login.html';
+                    return;
+                }
+                // --- FIM DA CORREÇÃO ---
                 const response = await fetch('http://127.0.0.1:5000/devices', {
-                    method: 'POST',
-                    headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify(deviceData)
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}` // <-- ADICIONE ESTA LINHA!
+                },
+                body: JSON.stringify(deviceData)
                 });
                 const result = await response.json();
-                if (response.ok) { // ou response.status === 201
-                addDeviceMessageDiv.textContent = result.message || 'Dispositivo adicionado com sucesso!';
-                addDeviceMessageDiv.className = 'success-message';
+                if (response.ok) {
+                    addDeviceMessageDiv.textContent = result.message || 'Dispositivo adicionado com sucesso!';
+                    addDeviceMessageDiv.className = 'success-message';
 
-                const idIpDescobertoOriginal = addDeviceForm.dataset.idIpDescoberto; // Pega o ID salvo
+                    const idIpDescobertoOriginal = addDeviceForm.dataset.idIpDescoberto;
 
-                addDeviceForm.reset();
-                delete addDeviceForm.dataset.idIpDescoberto; // Limpa o dataset
+                    addDeviceForm.reset();
+                    delete addDeviceForm.dataset.idIpDescoberto;
 
-                fetchAndDisplayDevices(); // Atualiza a lista de dispositivos na página principal
+                    fetchAndDisplayDevices();
 
-                // Se o dispositivo foi adicionado a partir de um IP descoberto, atualiza o status desse IP
-                if (idIpDescobertoOriginal) {
-                    try {
-                        console.log(`DEVICE HANDLER: Atualizando status do IP Descoberto ID ${idIpDescobertoOriginal} para 'Inventariado'`);
-                        const statusUpdateResponse = await fetch(`http://127.0.0.1:5000/api/discovery/discovered-ips/${idIpDescobertoOriginal}/status`, {
-                            method: 'PUT',
-                            headers: {'Content-Type': 'application/json'},
-                            body: JSON.stringify({ status: 'Inventariado' })
-                        });
-                        if (!statusUpdateResponse.ok) {
-                            const errStatusData = await statusUpdateResponse.json().catch(() => ({}));
-                            console.error(`Falha ao atualizar status do IP descoberto: ${errStatusData.message || statusUpdateResponse.statusText}`);
-                            // Não precisa mostrar um alert para o usuário aqui, mas logar é bom
-                        } else {
-                            console.log(`Status do IP Descoberto ID ${idIpDescobertoOriginal} atualizado para 'Inventariado'.`);
+                    if (idIpDescobertoOriginal) {
+                        try {
+                            console.log(`DEVICE HANDLER: Atualizando status do IP Descoberto ID ${idIpDescobertoOriginal} para 'Inventariado'`);
+                            const statusUpdateResponse = await fetch(`http://127.0.0.1:5000/api/discovery/discovered-ips/${idIpDescobertoOriginal}/status`, {
+                                method: 'PUT',
+                                headers: {'Content-Type': 'application/json'},
+                                body: JSON.stringify({ status: 'Inventariado' })
+                            });
+                            if (!statusUpdateResponse.ok) {
+                                const errStatusData = await statusUpdateResponse.json().catch(() => ({}));
+                                console.error(`Falha ao atualizar status do IP descoberto: ${errStatusData.message || statusUpdateResponse.statusText}`);
+                            } else {
+                                console.log(`Status do IP Descoberto ID ${idIpDescobertoOriginal} atualizado para 'Inventariado'.`);
+                            }
+                        } catch (statusError) {
+                            console.error('Erro ao tentar atualizar status do IP descoberto:', statusError);
                         }
-                    } catch (statusError) {
-                        console.error('Erro ao tentar atualizar status do IP descoberto:', statusError);
                     }
-                }
 
-                setTimeout(() => { 
-                    addDeviceModal.style.display = 'none';
-                }, 1500);
-            } else {
-                addDeviceMessageDiv.textContent = result.message || 'Erro ao adicionar dispositivo.';
-                addDeviceMessageDiv.className = 'error-message';
-            }
+                    setTimeout(() => { 
+                        addDeviceModal.style.display = 'none';
+                    }, 1500);
+                } else {
+                    addDeviceMessageDiv.textContent = result.message || 'Erro ao adicionar dispositivo.';
+                    addDeviceMessageDiv.className = 'error-message';
+                }
             } catch (error) {
                 console.error('Erro ao submeter novo dispositivo:', error);
                 addDeviceMessageDiv.textContent = 'Erro de comunicação com o servidor.';
@@ -341,6 +318,15 @@ document.addEventListener('DOMContentLoaded', function() {
             editDeviceMessageDiv.textContent = '';
             editDeviceMessageDiv.className = 'form-message-placeholder';
 
+            // --- INÍCIO DA MODIFICAÇÃO (EDITAR) ---
+            const token = localStorage.getItem('authToken');
+            if (!token) {
+                alert("Sua sessão expirou. Por favor, faça login novamente.");
+                window.location.href = 'login.html';
+                return;
+            }
+            // --- FIM DA MODIFICAÇÃO (EDITAR) ---
+
             const deviceId = hiddenDeviceIdInput.value;
             console.log("EDIT FORM: ID do Dispositivo para atualizar:", deviceId);
 
@@ -356,13 +342,13 @@ document.addEventListener('DOMContentLoaded', function() {
             formData.forEach((value, key) => {
                 if (key === 'ID_Dispositivo') return; 
 
-                if (key.startsWith('ID_') && value) { // Se for um ID_ e tiver valor (não for "Selecione...")
+                if (key.startsWith('ID_') && value) {
                     deviceDataToUpdate[key] = parseInt(value, 10);
-                } else if (key.startsWith('ID_') && !value) { // Se for um ID_ e o valor for "" (Selecione...)
-                    deviceDataToUpdate[key] = null; // Enviar null para o backend poder limpar o FK
+                } else if (key.startsWith('ID_') && !value) {
+                    deviceDataToUpdate[key] = null;
                 }
-                 else { // Para outros campos (NomeHost, Descricao, etc.)
-                    deviceDataToUpdate[key] = value.trim(); // Envia o valor, mesmo que seja string vazia para "limpar"
+                 else {
+                    deviceDataToUpdate[key] = value.trim();
                 }
             });
             
@@ -370,11 +356,17 @@ document.addEventListener('DOMContentLoaded', function() {
 
             try {
                 console.log(`EDIT FORM: Enviando requisição PUT para /devices/${deviceId}`);
+                
+                // --- INÍCIO DA MODIFICAÇÃO (EDITAR) ---
                 const response = await fetch(`http://127.0.0.1:5000/devices/${deviceId}`, {
                     method: 'PUT',
-                    headers: {'Content-Type': 'application/json'},
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
                     body: JSON.stringify(deviceDataToUpdate)
                 });
+                // --- FIM DA MODIFICAÇÃO (EDITAR) ---
                 
                 console.log("EDIT FORM: Resposta bruta do backend:", response);
                 const result = await response.json(); 
@@ -422,24 +414,23 @@ document.addEventListener('DOMContentLoaded', function() {
                         if (!response.ok) { /* ... tratamento de erro ... */ return; }
                         const device = await response.json();
                         console.log("DETAILS ACTION: Dados recebidos:", device);
-                        // ... (seu código para construir detailsHtml - parece OK) ...
                         let detailsHtml = `
-    <h4>Informações Gerais</h4>
-    <p><strong>ID do Dispositivo:</strong> ${device.ID_Dispositivo}</p>
-    <p><strong>Nome do Host:</strong> ${device.NomeHost || 'N/D'}</p>
-    <p><strong>Descrição:</strong> ${device.Descricao || 'N/D'}</p>
-    <p><strong>Modelo:</strong> ${device.Modelo || 'N/D'}</p>
-    <p><strong>Fabricante:</strong> ${device.FabricanteNome || 'N/D'} (ID: ${device.ID_Fabricante || 'N/D'})</p>
-    <p><strong>Sistema Operacional:</strong> ${device.SistemaOperacionalNome || 'N/D'} ${device.SistemaOperacionalVersao || ''} (Família: ${device.SistemaOperacionalFamilia || 'N/D'}, ID: ${device.ID_SistemaOperacional || 'N/D'})</p>
-    <p><strong>Tipo de Dispositivo:</strong> ${device.TipoDispositivoNome || 'N/D'} (ID: ${device.ID_TipoDispositivo || 'N/D'})</p>
-    <p><strong>Status Atual:</strong> ${device.StatusAtual || 'N/D'}</p>
-    <p><strong>Localização Física:</strong> ${device.LocalizacaoFisica || 'N/D'}</p>
-    <p><strong>Gerenciado Por:</strong> ${device.GerenciadoPorNomeUsuario || 'N/D'}</p>
-    <p><strong>Data de Descoberta:</strong> ${device.DataDescoberta ? new Date(device.DataDescoberta).toLocaleString('pt-BR') : 'N/D'}</p>
-    <p><strong>Última Modificação:</strong> ${device.DataUltimaModificacao ? new Date(device.DataUltimaModificacao).toLocaleString('pt-BR') : 'N/D'}</p>
-    <p><strong>Última Varredura:</strong> ${device.DataUltimaVarredura ? new Date(device.DataUltimaVarredura).toLocaleString('pt-BR') : 'N/D'}</p>
-    <p><strong>Observações:</strong> ${device.Observacoes || 'N/D'}</p>
-`;
+                            <h4>Informações Gerais</h4>
+                            <p><strong>ID do Dispositivo:</strong> ${device.ID_Dispositivo}</p>
+                            <p><strong>Nome do Host:</strong> ${device.NomeHost || 'N/D'}</p>
+                            <p><strong>Descrição:</strong> ${device.Descricao || 'N/D'}</p>
+                            <p><strong>Modelo:</strong> ${device.Modelo || 'N/D'}</p>
+                            <p><strong>Fabricante:</strong> ${device.FabricanteNome || 'N/D'} (ID: ${device.ID_Fabricante || 'N/D'})</p>
+                            <p><strong>Sistema Operacional:</strong> ${device.SistemaOperacionalNome || 'N/D'} ${device.SistemaOperacionalVersao || ''} (Família: ${device.SistemaOperacionalFamilia || 'N/D'}, ID: ${device.ID_SistemaOperacional || 'N/D'})</p>
+                            <p><strong>Tipo de Dispositivo:</strong> ${device.TipoDispositivoNome || 'N/D'} (ID: ${device.ID_TipoDispositivo || 'N/D'})</p>
+                            <p><strong>Status Atual:</strong> ${device.StatusAtual || 'N/D'}</p>
+                            <p><strong>Localização Física:</strong> ${device.LocalizacaoFisica || 'N/D'}</p>
+                            <p><strong>Gerenciado Por:</strong> ${device.GerenciadoPorNomeUsuario || 'N/D'}</p>
+                            <p><strong>Data de Descoberta:</strong> ${device.DataDescoberta ? new Date(device.DataDescoberta).toLocaleString('pt-BR') : 'N/D'}</p>
+                            <p><strong>Última Modificação:</strong> ${device.DataUltimaModificacao ? new Date(device.DataUltimaModificacao).toLocaleString('pt-BR') : 'N/D'}</p>
+                            <p><strong>Última Varredura:</strong> ${device.DataUltimaVarredura ? new Date(device.DataUltimaVarredura).toLocaleString('pt-BR') : 'N/D'}</p>
+                            <p><strong>Observações:</strong> ${device.Observacoes || 'N/D'}</p>
+                        `;
                         if (device.interfaces && device.interfaces.length > 0) {
                             detailsHtml += `<h4>Interface de Rede (${device.interfaces.length})</h4>`;
                             device.interfaces.forEach((iface, index) => {
@@ -464,9 +455,28 @@ document.addEventListener('DOMContentLoaded', function() {
                     addDeviceMessageDiv.textContent = ''; 
                     editDeviceMessageDiv.textContent = ''; 
                     try {
+                        // --- INÍCIO DA MODIFICAÇÃO (EDITAR) ---
+                        const token = localStorage.getItem('authToken');
+                        if (!token) {
+                            alert("Sua sessão expirou. Por favor, faça login novamente.");
+                            window.location.href = 'login.html';
+                            return;
+                        }
+
                         console.log(`EDIT ACTION: Buscando dados para dispositivo ID: ${deviceId}`);
-                        const response = await fetch(`http://127.0.0.1:5000/devices/${deviceId}`);
-                        if (!response.ok) { /* ... tratamento de erro ... */ return; }
+                        const response = await fetch(`http://127.0.0.1:5000/devices/${deviceId}`, {
+                           headers: {
+                               'Content-Type': 'application/json',
+                               'Authorization': `Bearer ${token}`
+                           }
+                        });
+                        // --- FIM DA MODIFICAÇÃO (EDITAR) ---
+
+                        if (!response.ok) { 
+                             const errorData = await response.json();
+                             alert(`Erro ao buscar dados do dispositivo: ${errorData.message || response.statusText}`);
+                             return; 
+                        }
                         const deviceData = await response.json();
                         console.log("EDIT ACTION: Dados recebidos para edição:", deviceData);
 
@@ -476,7 +486,6 @@ document.addEventListener('DOMContentLoaded', function() {
                         
                         hiddenDeviceIdInput.value = deviceData.ID_Dispositivo;
                         document.getElementById('edit-nomeHost').value = deviceData.NomeHost || '';
-                        // ... (preencher todos os outros campos do editDeviceForm) ...
                         document.getElementById('edit-descricao').value = deviceData.Descricao || '';
                         document.getElementById('edit-modelo').value = deviceData.Modelo || '';
                         document.getElementById('edit-statusAtual').value = deviceData.StatusAtual || 'Desconhecido';
@@ -488,15 +497,40 @@ document.addEventListener('DOMContentLoaded', function() {
                         editTipoDispositivoSelect.value = deviceData.ID_TipoDispositivo || '';
                         
                         editDeviceModal.style.display = 'block';
-                    } catch (error) { /* ... tratamento de erro ... */ }
+                    } catch (error) { 
+                        console.error("Erro na ação de editar:", error);
+                        alert("Ocorreu um erro ao tentar preparar a edição do dispositivo.");
+                    }
                 } else if (action === 'delete') {
                     if (confirm(`Tem certeza que deseja remover o dispositivo ID: ${deviceId}? Esta ação não pode ser desfeita.`)) {
                         try {
-                            const response = await fetch(`http://127.0.0.1:5000/devices/${deviceId}`, {method: 'DELETE', headers: {'Content-Type': 'application/json'}});
+                            // --- INÍCIO DA MODIFICAÇÃO (DELETAR COM AUTORIZAÇÃO) ---
+                            const token = localStorage.getItem('authToken');
+                            if (!token) {
+                                alert("Sua sessão expirou. Por favor, faça login novamente.");
+                                window.location.href = 'login.html';
+                                return;
+                            }
+
+                            const response = await fetch(`http://127.0.0.1:5000/devices/${deviceId}`, {
+                                method: 'DELETE',
+                                headers: {
+                                    'Content-Type': 'application/json',
+                                    'Authorization': `Bearer ${token}` // Adiciona o token ao cabeçalho
+                                }
+                            });
                             const result = await response.json();
-                            if (response.ok) { /* ... sucesso, alert, fetchAndDisplayDevices() ... */ } 
-                            else { /* ... erro, alert ... */ }
-                        } catch (error) { /* ... erro de fetch, alert ... */ }
+                            if (response.ok) { 
+                                alert(result.message || "Dispositivo removido com sucesso.");
+                                fetchAndDisplayDevices();
+                             } 
+                            else { 
+                                alert(`Erro ao remover: ${result.message || 'Erro desconhecido'}`);
+                            }
+                        } catch (error) { 
+                            console.error("Erro ao deletar:", error);
+                            alert("Erro de comunicação ao tentar remover o dispositivo.");
+                        }
                     }
                 }
             }
