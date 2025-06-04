@@ -139,436 +139,436 @@ Siga os passos abaixo para configurar o ambiente de desenvolvimento local:
         * Execute o script SQL
           ```bash
 
-CREATE SCHEMA IF NOT EXISTS `networkassetmanagerdb` DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci ;
-USE `networkassetmanagerdb` ;
+            CREATE SCHEMA IF NOT EXISTS `networkassetmanagerdb` DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci ;
+            USE `networkassetmanagerdb` ;
+            
+            -- -----------------------------------------------------
+            -- Table `networkassetmanagerdb`.`fabricante`
+            -- -----------------------------------------------------
+            CREATE TABLE IF NOT EXISTS `networkassetmanagerdb`.`fabricante` (
+              `ID_Fabricante` INT NOT NULL AUTO_INCREMENT,
+              `Nome` VARCHAR(100) NOT NULL,
+              PRIMARY KEY (`ID_Fabricante`),
+              UNIQUE INDEX `UQ_NomeFabricante` (`Nome` ASC) VISIBLE)
+            ENGINE = InnoDB
+            AUTO_INCREMENT = 7
+            DEFAULT CHARACTER SET = utf8mb4
+            COLLATE = utf8mb4_unicode_ci
+            COMMENT = 'Fabricantes de dispositivos e componentes de rede.';
+            
+            
+            -- -----------------------------------------------------
+            -- Table `networkassetmanagerdb`.`sistemaoperacional`
+            -- -----------------------------------------------------
+            CREATE TABLE IF NOT EXISTS `networkassetmanagerdb`.`sistemaoperacional` (
+              `ID_SistemaOperacional` INT NOT NULL AUTO_INCREMENT,
+              `Nome` VARCHAR(100) NOT NULL,
+              `Versao` VARCHAR(50) NULL DEFAULT NULL,
+              `Familia` VARCHAR(50) NULL DEFAULT NULL COMMENT 'Ex: Windows, Linux, macOS, Android',
+              PRIMARY KEY (`ID_SistemaOperacional`),
+              UNIQUE INDEX `UQ_SO_NomeVersao` (`Nome` ASC, `Versao` ASC) VISIBLE)
+            ENGINE = InnoDB
+            AUTO_INCREMENT = 7
+            DEFAULT CHARACTER SET = utf8mb4
+            COLLATE = utf8mb4_unicode_ci
+            COMMENT = 'Sistemas Operacionais dos dispositivos.';
+            
+            
+            -- -----------------------------------------------------
+            -- Table `networkassetmanagerdb`.`tipodispositivo`
+            -- -----------------------------------------------------
+            CREATE TABLE IF NOT EXISTS `networkassetmanagerdb`.`tipodispositivo` (
+              `ID_TipoDispositivo` INT NOT NULL AUTO_INCREMENT,
+              `Nome` VARCHAR(100) NOT NULL,
+              `Icone` VARCHAR(255) NULL DEFAULT NULL COMMENT 'Caminho para um ícone ou classe CSS',
+              PRIMARY KEY (`ID_TipoDispositivo`),
+              UNIQUE INDEX `UQ_NomeTipoDispositivo` (`Nome` ASC) VISIBLE)
+            ENGINE = InnoDB
+            AUTO_INCREMENT = 9
+            DEFAULT CHARACTER SET = utf8mb4
+            COLLATE = utf8mb4_unicode_ci
+            COMMENT = 'Tipos de dispositivos (ex: Servidor, Desktop, Impressora).';
+            
+            
+            -- -----------------------------------------------------
+            -- Table `networkassetmanagerdb`.`perfilusuario`
+            -- -----------------------------------------------------
+            CREATE TABLE IF NOT EXISTS `networkassetmanagerdb`.`perfilusuario` (
+              `ID_Perfil` INT NOT NULL AUTO_INCREMENT,
+              `NomePerfil` VARCHAR(50) NOT NULL,
+              `Descricao` TEXT NULL DEFAULT NULL,
+              PRIMARY KEY (`ID_Perfil`),
+              UNIQUE INDEX `UQ_NomePerfil` (`NomePerfil` ASC) VISIBLE)
+            ENGINE = InnoDB
+            AUTO_INCREMENT = 3
+            DEFAULT CHARACTER SET = utf8mb4
+            COLLATE = utf8mb4_unicode_ci
+            COMMENT = 'Perfis de usuário para controle de acesso (ex: Administrador, Operador).';
+            
+            
+            -- -----------------------------------------------------
+            -- Table `networkassetmanagerdb`.`usuario`
+            -- -----------------------------------------------------
+            CREATE TABLE IF NOT EXISTS `networkassetmanagerdb`.`usuario` (
+              `ID_Usuario` INT NOT NULL AUTO_INCREMENT,
+              `NomeUsuario` VARCHAR(100) NOT NULL,
+              `SenhaHash` VARCHAR(255) NOT NULL,
+              `Email` VARCHAR(255) NOT NULL,
+              `NomeCompleto` VARCHAR(255) NULL DEFAULT NULL,
+              `ID_Perfil` INT NOT NULL,
+              `Ativo` TINYINT(1) NOT NULL DEFAULT '1',
+              `DataCriacao` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+              PRIMARY KEY (`ID_Usuario`),
+              UNIQUE INDEX `UQ_NomeUsuario` (`NomeUsuario` ASC) VISIBLE,
+              UNIQUE INDEX `UQ_Email` (`Email` ASC) VISIBLE,
+              INDEX `FK_Usuario_Perfil_idx` (`ID_Perfil` ASC) VISIBLE,
+              CONSTRAINT `FK_Usuario_Perfil`
+                FOREIGN KEY (`ID_Perfil`)
+                REFERENCES `networkassetmanagerdb`.`perfilusuario` (`ID_Perfil`)
+                ON DELETE RESTRICT
+                ON UPDATE CASCADE)
+            ENGINE = InnoDB
+            AUTO_INCREMENT = 4
+            DEFAULT CHARACTER SET = utf8mb4
+            COLLATE = utf8mb4_unicode_ci
+            COMMENT = 'Usuários do sistema.';
+            
+            
+            -- -----------------------------------------------------
+            -- Table `networkassetmanagerdb`.`dispositivo`
+            -- -----------------------------------------------------
+            CREATE TABLE IF NOT EXISTS `networkassetmanagerdb`.`dispositivo` (
+              `ID_Dispositivo` INT NOT NULL AUTO_INCREMENT,
+              `NomeHost` VARCHAR(255) NULL DEFAULT NULL,
+              `Descricao` TEXT NULL DEFAULT NULL,
+              `Modelo` VARCHAR(100) NULL DEFAULT NULL,
+              `ID_Fabricante` INT NULL DEFAULT NULL,
+              `ID_SistemaOperacional` INT NULL DEFAULT NULL,
+              `ID_TipoDispositivo` INT NULL DEFAULT NULL,
+              `DataDescoberta` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+              `DataUltimaModificacao` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+              `DataUltimaVarredura` TIMESTAMP NULL DEFAULT NULL,
+              `StatusAtual` VARCHAR(50) NOT NULL DEFAULT 'Desconhecido' COMMENT 'Ex: Online, Offline, Com Falha',
+              `LocalizacaoFisica` VARCHAR(255) NULL DEFAULT NULL,
+              `Observacoes` TEXT NULL DEFAULT NULL,
+              `GerenciadoPor` INT NULL DEFAULT NULL,
+              PRIMARY KEY (`ID_Dispositivo`),
+              UNIQUE INDEX `UQ_NomeHost` (`NomeHost` ASC) VISIBLE,
+              INDEX `FK_Dispositivo_Fabricante_idx` (`ID_Fabricante` ASC) VISIBLE,
+              INDEX `FK_Dispositivo_SO_idx` (`ID_SistemaOperacional` ASC) VISIBLE,
+              INDEX `FK_Dispositivo_Tipo_idx` (`ID_TipoDispositivo` ASC) VISIBLE,
+              INDEX `FK_Dispositivo_UsuarioGerente_idx` (`GerenciadoPor` ASC) VISIBLE,
+              CONSTRAINT `FK_Dispositivo_Fabricante`
+                FOREIGN KEY (`ID_Fabricante`)
+                REFERENCES `networkassetmanagerdb`.`fabricante` (`ID_Fabricante`)
+                ON DELETE SET NULL
+                ON UPDATE CASCADE,
+              CONSTRAINT `FK_Dispositivo_SO`
+                FOREIGN KEY (`ID_SistemaOperacional`)
+                REFERENCES `networkassetmanagerdb`.`sistemaoperacional` (`ID_SistemaOperacional`)
+                ON DELETE SET NULL
+                ON UPDATE CASCADE,
+              CONSTRAINT `FK_Dispositivo_Tipo`
+                FOREIGN KEY (`ID_TipoDispositivo`)
+                REFERENCES `networkassetmanagerdb`.`tipodispositivo` (`ID_TipoDispositivo`)
+                ON DELETE SET NULL
+                ON UPDATE CASCADE,
+              CONSTRAINT `FK_Dispositivo_UsuarioGerente`
+                FOREIGN KEY (`GerenciadoPor`)
+                REFERENCES `networkassetmanagerdb`.`usuario` (`ID_Usuario`)
+                ON DELETE SET NULL
+                ON UPDATE CASCADE)
+            ENGINE = InnoDB
+            AUTO_INCREMENT = 24
+            DEFAULT CHARACTER SET = utf8mb4
+            COLLATE = utf8mb4_unicode_ci
+            COMMENT = 'Dispositivos inventariados na rede.';
+            
+            
+            -- -----------------------------------------------------
+            -- Table `networkassetmanagerdb`.`interfacerede`
+            -- -----------------------------------------------------
+            CREATE TABLE IF NOT EXISTS `networkassetmanagerdb`.`interfacerede` (
+              `ID_Interface` INT NOT NULL AUTO_INCREMENT,
+              `ID_Dispositivo` INT NOT NULL,
+              `NomeInterface` VARCHAR(100) NULL DEFAULT NULL COMMENT 'Ex: eth0, wlan0, GigabitEthernet0/1',
+              `EnderecoMAC` VARCHAR(17) NOT NULL COMMENT 'Formato: XX:XX:XX:XX:XX:XX',
+              `ID_Fabricante_MAC` INT NULL DEFAULT NULL COMMENT 'Derivado do OUI do MAC',
+              `Ativa` TINYINT(1) NOT NULL DEFAULT '1',
+              PRIMARY KEY (`ID_Interface`),
+              UNIQUE INDEX `UQ_EnderecoMAC` (`EnderecoMAC` ASC) VISIBLE,
+              INDEX `FK_Interface_Dispositivo_idx` (`ID_Dispositivo` ASC) VISIBLE,
+              INDEX `FK_Interface_FabricanteMAC_idx` (`ID_Fabricante_MAC` ASC) VISIBLE,
+              CONSTRAINT `FK_Interface_Dispositivo`
+                FOREIGN KEY (`ID_Dispositivo`)
+                REFERENCES `networkassetmanagerdb`.`dispositivo` (`ID_Dispositivo`)
+                ON DELETE CASCADE
+                ON UPDATE CASCADE,
+              CONSTRAINT `FK_Interface_FabricanteMAC`
+                FOREIGN KEY (`ID_Fabricante_MAC`)
+                REFERENCES `networkassetmanagerdb`.`fabricante` (`ID_Fabricante`)
+                ON DELETE SET NULL
+                ON UPDATE CASCADE)
+            ENGINE = InnoDB
+            DEFAULT CHARACTER SET = utf8mb4
+            COLLATE = utf8mb4_unicode_ci
+            COMMENT = 'Interfaces de rede dos dispositivos.';
+            
+            
+            -- -----------------------------------------------------
+            -- Table `networkassetmanagerdb`.`rede`
+            -- -----------------------------------------------------
+            CREATE TABLE IF NOT EXISTS `networkassetmanagerdb`.`rede` (
+              `ID_Rede` INT NOT NULL AUTO_INCREMENT,
+              `NomeRede` VARCHAR(100) NOT NULL,
+              `SubRedeCIDR` VARCHAR(45) NOT NULL COMMENT 'Ex: 192.168.1.0/24 ou 2001:db8::/32',
+              `GatewayPadrao` VARCHAR(45) NULL DEFAULT NULL,
+              `ServidorDNSPrimario` VARCHAR(45) NULL DEFAULT NULL,
+              `VLAN_ID` INT NULL DEFAULT NULL,
+              `Descricao` TEXT NULL DEFAULT NULL,
+              PRIMARY KEY (`ID_Rede`),
+              UNIQUE INDEX `UQ_NomeRede` (`NomeRede` ASC) VISIBLE,
+              UNIQUE INDEX `UQ_SubRedeCIDR` (`SubRedeCIDR` ASC) VISIBLE)
+            ENGINE = InnoDB
+            DEFAULT CHARACTER SET = utf8mb4
+            COLLATE = utf8mb4_unicode_ci
+            COMMENT = 'Informações sobre as redes/sub-redes gerenciadas.';
+            
+            
+            -- -----------------------------------------------------
+            -- Table `networkassetmanagerdb`.`enderecoip`
+            -- -----------------------------------------------------
+            CREATE TABLE IF NOT EXISTS `networkassetmanagerdb`.`enderecoip` (
+              `ID_EnderecoIP` INT NOT NULL AUTO_INCREMENT,
+              `ID_Interface` INT NOT NULL,
+              `EnderecoIPValor` VARCHAR(45) NOT NULL COMMENT 'Armazena o endereço IPv4 ou IPv6',
+              `TipoIP` VARCHAR(4) NOT NULL COMMENT 'IPv4 ou IPv6',
+              `TipoAtribuicao` VARCHAR(10) NULL DEFAULT NULL COMMENT 'Estatico, DHCP',
+              `ID_Rede` INT NULL DEFAULT NULL,
+              `Principal` TINYINT(1) NOT NULL DEFAULT '0' COMMENT 'Indica se é o IP principal da interface',
+              `DataPrimeiraDeteccao` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+              `DataUltimaDeteccao` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+              PRIMARY KEY (`ID_EnderecoIP`),
+              UNIQUE INDEX `UQ_Interface_IP` (`ID_Interface` ASC, `EnderecoIPValor` ASC) VISIBLE,
+              INDEX `FK_IP_Interface_idx` (`ID_Interface` ASC) VISIBLE,
+              INDEX `FK_IP_Rede_idx` (`ID_Rede` ASC) VISIBLE,
+              CONSTRAINT `FK_IP_Interface`
+                FOREIGN KEY (`ID_Interface`)
+                REFERENCES `networkassetmanagerdb`.`interfacerede` (`ID_Interface`)
+                ON DELETE CASCADE
+                ON UPDATE CASCADE,
+              CONSTRAINT `FK_IP_Rede`
+                FOREIGN KEY (`ID_Rede`)
+                REFERENCES `networkassetmanagerdb`.`rede` (`ID_Rede`)
+                ON DELETE SET NULL
+                ON UPDATE CASCADE)
+            ENGINE = InnoDB
+            DEFAULT CHARACTER SET = utf8mb4
+            COLLATE = utf8mb4_unicode_ci
+            COMMENT = 'Endereços IP associados às interfaces de rede.';
+            
+            
+            -- -----------------------------------------------------
+            -- Table `networkassetmanagerdb`.`ipsdescobertos`
+            -- -----------------------------------------------------
+            CREATE TABLE IF NOT EXISTS `networkassetmanagerdb`.`ipsdescobertos` (
+              `ID_IPDescoberto` INT NOT NULL AUTO_INCREMENT,
+              `EnderecoIP` VARCHAR(45) NOT NULL,
+              `DataPrimeiraDeteccao` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+              `DataUltimaDeteccao` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+              `StatusResolucao` VARCHAR(50) NOT NULL DEFAULT 'Novo' COMMENT 'Ex: Novo, Em_Analise, Inventariado, Ignorado',
+              `NomeHostResolvido` VARCHAR(255) NULL DEFAULT NULL,
+              `MAC_Address_Estimado` VARCHAR(17) NULL DEFAULT NULL,
+              `OS_Estimado` VARCHAR(255) NULL DEFAULT NULL,
+              `Portas_Abertas` TEXT NULL DEFAULT NULL,
+              `DetalhesVarreduraExtra` TEXT NULL DEFAULT NULL COMMENT 'Para armazenar outros detalhes do Nmap',
+              PRIMARY KEY (`ID_IPDescoberto`),
+              UNIQUE INDEX `UQ_EnderecoIPDescoberto` (`EnderecoIP` ASC) VISIBLE)
+            ENGINE = InnoDB
+            AUTO_INCREMENT = 14
+            DEFAULT CHARACTER SET = utf8mb4
+            COLLATE = utf8mb4_unicode_ci
+            COMMENT = 'Armazena IPs detectados na rede que ainda não foram totalmente inventariados.';
+            
+            
+            -- -----------------------------------------------------
+            -- Table `networkassetmanagerdb`.`tipoalerta`
+            -- -----------------------------------------------------
+            CREATE TABLE IF NOT EXISTS `networkassetmanagerdb`.`tipoalerta` (
+              `ID_TipoAlerta` INT NOT NULL AUTO_INCREMENT,
+              `Nome` VARCHAR(100) NOT NULL,
+              `Descricao` TEXT NULL DEFAULT NULL,
+              `SeveridadePadrao` VARCHAR(20) NOT NULL DEFAULT 'Media' COMMENT 'Baixa, Media, Alta, Critica',
+              PRIMARY KEY (`ID_TipoAlerta`),
+              UNIQUE INDEX `UQ_NomeTipoAlerta` (`Nome` ASC) VISIBLE)
+            ENGINE = InnoDB
+            AUTO_INCREMENT = 4
+            DEFAULT CHARACTER SET = utf8mb4
+            COLLATE = utf8mb4_unicode_ci
+            COMMENT = 'Tipos de alertas que podem ser gerados pelo sistema.';
+            
+            
+            -- -----------------------------------------------------
+            -- Table `networkassetmanagerdb`.`alerta`
+            -- -----------------------------------------------------
+            CREATE TABLE IF NOT EXISTS `networkassetmanagerdb`.`alerta` (
+              `ID_Alerta` INT NOT NULL AUTO_INCREMENT,
+              `ID_TipoAlerta` INT NOT NULL,
+              `ID_Dispositivo` INT NULL DEFAULT NULL,
+              `ID_IPDescoberto_FK` INT NULL DEFAULT NULL,
+              `ID_Interface` INT NULL DEFAULT NULL,
+              `ID_EnderecoIP` INT NULL DEFAULT NULL,
+              `DescricaoCustomizada` TEXT NULL DEFAULT NULL,
+              `DataHoraCriacao` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+              `StatusAlerta` VARCHAR(20) NOT NULL DEFAULT 'Novo' COMMENT 'Novo, Em Investigacao, Resolvido, Ignorado',
+              `Severidade` VARCHAR(20) NOT NULL DEFAULT 'Media',
+              `DataHoraResolucao` TIMESTAMP NULL DEFAULT NULL,
+              `ID_UsuarioResponsavel` INT NULL DEFAULT NULL,
+              `DetalhesTecnicos` JSON NULL DEFAULT NULL COMMENT 'Dados brutos do evento gerador',
+              PRIMARY KEY (`ID_Alerta`),
+              INDEX `FK_Alerta_Tipo_idx` (`ID_TipoAlerta` ASC) VISIBLE,
+              INDEX `FK_Alerta_Dispositivo_idx` (`ID_Dispositivo` ASC) VISIBLE,
+              INDEX `FK_Alerta_Interface_idx` (`ID_Interface` ASC) VISIBLE,
+              INDEX `FK_Alerta_IP_idx` (`ID_EnderecoIP` ASC) VISIBLE,
+              INDEX `FK_Alerta_UsuarioResponsavel_idx` (`ID_UsuarioResponsavel` ASC) VISIBLE,
+              INDEX `FK_Alerta_IPDescoberto` (`ID_IPDescoberto_FK` ASC) VISIBLE,
+              CONSTRAINT `FK_Alerta_Dispositivo`
+                FOREIGN KEY (`ID_Dispositivo`)
+                REFERENCES `networkassetmanagerdb`.`dispositivo` (`ID_Dispositivo`)
+                ON DELETE SET NULL
+                ON UPDATE CASCADE,
+              CONSTRAINT `FK_Alerta_Interface`
+                FOREIGN KEY (`ID_Interface`)
+                REFERENCES `networkassetmanagerdb`.`interfacerede` (`ID_Interface`)
+                ON DELETE SET NULL
+                ON UPDATE CASCADE,
+              CONSTRAINT `FK_Alerta_IP`
+                FOREIGN KEY (`ID_EnderecoIP`)
+                REFERENCES `networkassetmanagerdb`.`enderecoip` (`ID_EnderecoIP`)
+                ON DELETE SET NULL
+                ON UPDATE CASCADE,
+              CONSTRAINT `FK_Alerta_IPDescoberto`
+                FOREIGN KEY (`ID_IPDescoberto_FK`)
+                REFERENCES `networkassetmanagerdb`.`ipsdescobertos` (`ID_IPDescoberto`)
+                ON DELETE SET NULL
+                ON UPDATE CASCADE,
+              CONSTRAINT `FK_Alerta_Tipo`
+                FOREIGN KEY (`ID_TipoAlerta`)
+                REFERENCES `networkassetmanagerdb`.`tipoalerta` (`ID_TipoAlerta`)
+                ON DELETE RESTRICT
+                ON UPDATE CASCADE,
+              CONSTRAINT `FK_Alerta_UsuarioResponsavel`
+                FOREIGN KEY (`ID_UsuarioResponsavel`)
+                REFERENCES `networkassetmanagerdb`.`usuario` (`ID_Usuario`)
+                ON DELETE SET NULL
+                ON UPDATE CASCADE)
+            ENGINE = InnoDB
+            AUTO_INCREMENT = 8
+            DEFAULT CHARACTER SET = utf8mb4
+            COLLATE = utf8mb4_unicode_ci
+            COMMENT = 'Alertas gerados pelo sistema.';
+            
+            
+            -- -----------------------------------------------------
+            -- Table `networkassetmanagerdb`.`configuracaovarredura`
+            -- -----------------------------------------------------
+            CREATE TABLE IF NOT EXISTS `networkassetmanagerdb`.`configuracaovarredura` (
+              `ID_ConfigVarredura` INT NOT NULL AUTO_INCREMENT,
+              `FaixasIP` TEXT NULL DEFAULT NULL COMMENT 'Faixas de IP a serem escaneadas, separadas por vírgula ou JSON',
+              `FrequenciaMinutos` INT NULL DEFAULT '60' COMMENT 'Frequência da varredura em minutos (ex: 60 para cada hora)',
+              `AgendamentoCron` VARCHAR(100) NULL DEFAULT NULL COMMENT 'Expressão CRON para agendamento avançado (opcional)',
+              `VarreduraAtivada` TINYINT(1) NOT NULL DEFAULT '0' COMMENT 'Se a varredura automática está ativada',
+              `DataUltimaModificacao` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+              PRIMARY KEY (`ID_ConfigVarredura`))
+            ENGINE = InnoDB
+            AUTO_INCREMENT = 2
+            DEFAULT CHARACTER SET = utf8mb4
+            COLLATE = utf8mb4_unicode_ci
+            COMMENT = 'Armazena as configurações para a varredura automática de rede.';
+            
+            
+            -- -----------------------------------------------------
+            -- Table `networkassetmanagerdb`.`logauditoria`
+            -- -----------------------------------------------------
+            CREATE TABLE IF NOT EXISTS `networkassetmanagerdb`.`logauditoria` (
+              `ID_Log` INT NOT NULL AUTO_INCREMENT,
+              `Timestamp` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+              `ID_Usuario_FK` INT NULL DEFAULT NULL COMMENT 'ID do usuário que realizou a ação, se aplicável',
+              `NomeUsuario` VARCHAR(100) NULL DEFAULT NULL COMMENT 'Nome do usuário, para referência rápida',
+              `Acao` VARCHAR(255) NOT NULL COMMENT 'Ex: LOGIN_SUCESSO, ADD_DEVICE, UPDATE_DEVICE_SETTINGS, SCAN_STARTED',
+              `Detalhes` TEXT NULL DEFAULT NULL COMMENT 'Detalhes adicionais sobre a ação, ex: ID do dispositivo afetado, valores alterados (pode ser JSON)',
+              `EnderecoIPOrigem` VARCHAR(45) NULL DEFAULT NULL COMMENT 'IP de onde a ação foi originada, se aplicável (ex: da requisição HTTP)',
+              PRIMARY KEY (`ID_Log`),
+              INDEX `FK_LogAuditoria_Usuario_idx` (`ID_Usuario_FK` ASC) VISIBLE,
+              CONSTRAINT `FK_LogAuditoria_Usuario`
+                FOREIGN KEY (`ID_Usuario_FK`)
+                REFERENCES `networkassetmanagerdb`.`usuario` (`ID_Usuario`)
+                ON DELETE SET NULL
+                ON UPDATE CASCADE)
+            ENGINE = InnoDB
+            AUTO_INCREMENT = 17
+            DEFAULT CHARACTER SET = utf8mb4
+            COLLATE = utf8mb4_unicode_ci
+            COMMENT = 'Registra eventos importantes e ações de usuários no sistema.';
+            
+            
+            -- -----------------------------------------------------
+            -- Table `networkassetmanagerdb`.`logstatusdispositivo`
+            -- -----------------------------------------------------
+            CREATE TABLE IF NOT EXISTS `networkassetmanagerdb`.`logstatusdispositivo` (
+              `ID_LogStatus` INT NOT NULL AUTO_INCREMENT,
+              `ID_Dispositivo` INT NOT NULL,
+              `StatusAnterior` VARCHAR(50) NULL DEFAULT NULL,
+              `StatusNovo` VARCHAR(50) NOT NULL,
+              `DataHoraMudanca` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+              `FonteMudanca` VARCHAR(100) NULL DEFAULT NULL COMMENT 'Ex: Varredura Automática, Edição Manual',
+              `Detalhes` TEXT NULL DEFAULT NULL,
+              PRIMARY KEY (`ID_LogStatus`),
+              INDEX `FK_LogStatus_Dispositivo_idx` (`ID_Dispositivo` ASC) VISIBLE,
+              CONSTRAINT `FK_LogStatus_Dispositivo`
+                FOREIGN KEY (`ID_Dispositivo`)
+                REFERENCES `networkassetmanagerdb`.`dispositivo` (`ID_Dispositivo`)
+                ON DELETE CASCADE
+                ON UPDATE CASCADE)
+            ENGINE = InnoDB
+            DEFAULT CHARACTER SET = utf8mb4
+            COLLATE = utf8mb4_unicode_ci
+            COMMENT = 'Histórico de mudanças de status dos dispositivos.';
+            
+            
+            -- -----------------------------------------------------
+            -- Table `networkassetmanagerdb`.`notificacaoalerta`
+            -- -----------------------------------------------------
+            CREATE TABLE IF NOT EXISTS `networkassetmanagerdb`.`notificacaoalerta` (
+              `ID_Notificacao` INT NOT NULL AUTO_INCREMENT,
+              `ID_Alerta` INT NOT NULL,
+              `ID_Usuario` INT NOT NULL COMMENT 'Usuário notificado',
+              `MetodoNotificacao` VARCHAR(50) NOT NULL COMMENT 'Ex: Email, Sistema, SMS',
+              `DataHoraEnvio` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+              `StatusEnvio` VARCHAR(20) NOT NULL COMMENT 'Enviado, Falhou, Lido',
+              PRIMARY KEY (`ID_Notificacao`),
+              INDEX `FK_Notificacao_Alerta_idx` (`ID_Alerta` ASC) VISIBLE,
+              INDEX `FK_Notificacao_Usuario_idx` (`ID_Usuario` ASC) VISIBLE,
+              CONSTRAINT `FK_Notificacao_Alerta`
+                FOREIGN KEY (`ID_Alerta`)
+                REFERENCES `networkassetmanagerdb`.`alerta` (`ID_Alerta`)
+                ON DELETE CASCADE
+                ON UPDATE CASCADE,
+              CONSTRAINT `FK_Notificacao_Usuario`
+                FOREIGN KEY (`ID_Usuario`)
+                REFERENCES `networkassetmanagerdb`.`usuario` (`ID_Usuario`)
+                ON DELETE CASCADE
+                ON UPDATE CASCADE)
+            ENGINE = InnoDB
+            DEFAULT CHARACTER SET = utf8mb4
+            COLLATE = utf8mb4_unicode_ci
+            COMMENT = 'Registros de notificações enviadas para usuários sobre alertas.';
+            
+            
+            SET SQL_MODE=@OLD_SQL_MODE;
+            SET FOREIGN_KEY_CHECKS=@OLD_FOREIGN_KEY_CHECKS;
+            SET UNIQUE_CHECKS=@OLD_UNIQUE_CHECKS;
 
--- -----------------------------------------------------
--- Table `networkassetmanagerdb`.`fabricante`
--- -----------------------------------------------------
-CREATE TABLE IF NOT EXISTS `networkassetmanagerdb`.`fabricante` (
-  `ID_Fabricante` INT NOT NULL AUTO_INCREMENT,
-  `Nome` VARCHAR(100) NOT NULL,
-  PRIMARY KEY (`ID_Fabricante`),
-  UNIQUE INDEX `UQ_NomeFabricante` (`Nome` ASC) VISIBLE)
-ENGINE = InnoDB
-AUTO_INCREMENT = 7
-DEFAULT CHARACTER SET = utf8mb4
-COLLATE = utf8mb4_unicode_ci
-COMMENT = 'Fabricantes de dispositivos e componentes de rede.';
-
-
--- -----------------------------------------------------
--- Table `networkassetmanagerdb`.`sistemaoperacional`
--- -----------------------------------------------------
-CREATE TABLE IF NOT EXISTS `networkassetmanagerdb`.`sistemaoperacional` (
-  `ID_SistemaOperacional` INT NOT NULL AUTO_INCREMENT,
-  `Nome` VARCHAR(100) NOT NULL,
-  `Versao` VARCHAR(50) NULL DEFAULT NULL,
-  `Familia` VARCHAR(50) NULL DEFAULT NULL COMMENT 'Ex: Windows, Linux, macOS, Android',
-  PRIMARY KEY (`ID_SistemaOperacional`),
-  UNIQUE INDEX `UQ_SO_NomeVersao` (`Nome` ASC, `Versao` ASC) VISIBLE)
-ENGINE = InnoDB
-AUTO_INCREMENT = 7
-DEFAULT CHARACTER SET = utf8mb4
-COLLATE = utf8mb4_unicode_ci
-COMMENT = 'Sistemas Operacionais dos dispositivos.';
-
-
--- -----------------------------------------------------
--- Table `networkassetmanagerdb`.`tipodispositivo`
--- -----------------------------------------------------
-CREATE TABLE IF NOT EXISTS `networkassetmanagerdb`.`tipodispositivo` (
-  `ID_TipoDispositivo` INT NOT NULL AUTO_INCREMENT,
-  `Nome` VARCHAR(100) NOT NULL,
-  `Icone` VARCHAR(255) NULL DEFAULT NULL COMMENT 'Caminho para um ícone ou classe CSS',
-  PRIMARY KEY (`ID_TipoDispositivo`),
-  UNIQUE INDEX `UQ_NomeTipoDispositivo` (`Nome` ASC) VISIBLE)
-ENGINE = InnoDB
-AUTO_INCREMENT = 9
-DEFAULT CHARACTER SET = utf8mb4
-COLLATE = utf8mb4_unicode_ci
-COMMENT = 'Tipos de dispositivos (ex: Servidor, Desktop, Impressora).';
-
-
--- -----------------------------------------------------
--- Table `networkassetmanagerdb`.`perfilusuario`
--- -----------------------------------------------------
-CREATE TABLE IF NOT EXISTS `networkassetmanagerdb`.`perfilusuario` (
-  `ID_Perfil` INT NOT NULL AUTO_INCREMENT,
-  `NomePerfil` VARCHAR(50) NOT NULL,
-  `Descricao` TEXT NULL DEFAULT NULL,
-  PRIMARY KEY (`ID_Perfil`),
-  UNIQUE INDEX `UQ_NomePerfil` (`NomePerfil` ASC) VISIBLE)
-ENGINE = InnoDB
-AUTO_INCREMENT = 3
-DEFAULT CHARACTER SET = utf8mb4
-COLLATE = utf8mb4_unicode_ci
-COMMENT = 'Perfis de usuário para controle de acesso (ex: Administrador, Operador).';
-
-
--- -----------------------------------------------------
--- Table `networkassetmanagerdb`.`usuario`
--- -----------------------------------------------------
-CREATE TABLE IF NOT EXISTS `networkassetmanagerdb`.`usuario` (
-  `ID_Usuario` INT NOT NULL AUTO_INCREMENT,
-  `NomeUsuario` VARCHAR(100) NOT NULL,
-  `SenhaHash` VARCHAR(255) NOT NULL,
-  `Email` VARCHAR(255) NOT NULL,
-  `NomeCompleto` VARCHAR(255) NULL DEFAULT NULL,
-  `ID_Perfil` INT NOT NULL,
-  `Ativo` TINYINT(1) NOT NULL DEFAULT '1',
-  `DataCriacao` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  PRIMARY KEY (`ID_Usuario`),
-  UNIQUE INDEX `UQ_NomeUsuario` (`NomeUsuario` ASC) VISIBLE,
-  UNIQUE INDEX `UQ_Email` (`Email` ASC) VISIBLE,
-  INDEX `FK_Usuario_Perfil_idx` (`ID_Perfil` ASC) VISIBLE,
-  CONSTRAINT `FK_Usuario_Perfil`
-    FOREIGN KEY (`ID_Perfil`)
-    REFERENCES `networkassetmanagerdb`.`perfilusuario` (`ID_Perfil`)
-    ON DELETE RESTRICT
-    ON UPDATE CASCADE)
-ENGINE = InnoDB
-AUTO_INCREMENT = 4
-DEFAULT CHARACTER SET = utf8mb4
-COLLATE = utf8mb4_unicode_ci
-COMMENT = 'Usuários do sistema.';
-
-
--- -----------------------------------------------------
--- Table `networkassetmanagerdb`.`dispositivo`
--- -----------------------------------------------------
-CREATE TABLE IF NOT EXISTS `networkassetmanagerdb`.`dispositivo` (
-  `ID_Dispositivo` INT NOT NULL AUTO_INCREMENT,
-  `NomeHost` VARCHAR(255) NULL DEFAULT NULL,
-  `Descricao` TEXT NULL DEFAULT NULL,
-  `Modelo` VARCHAR(100) NULL DEFAULT NULL,
-  `ID_Fabricante` INT NULL DEFAULT NULL,
-  `ID_SistemaOperacional` INT NULL DEFAULT NULL,
-  `ID_TipoDispositivo` INT NULL DEFAULT NULL,
-  `DataDescoberta` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  `DataUltimaModificacao` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-  `DataUltimaVarredura` TIMESTAMP NULL DEFAULT NULL,
-  `StatusAtual` VARCHAR(50) NOT NULL DEFAULT 'Desconhecido' COMMENT 'Ex: Online, Offline, Com Falha',
-  `LocalizacaoFisica` VARCHAR(255) NULL DEFAULT NULL,
-  `Observacoes` TEXT NULL DEFAULT NULL,
-  `GerenciadoPor` INT NULL DEFAULT NULL,
-  PRIMARY KEY (`ID_Dispositivo`),
-  UNIQUE INDEX `UQ_NomeHost` (`NomeHost` ASC) VISIBLE,
-  INDEX `FK_Dispositivo_Fabricante_idx` (`ID_Fabricante` ASC) VISIBLE,
-  INDEX `FK_Dispositivo_SO_idx` (`ID_SistemaOperacional` ASC) VISIBLE,
-  INDEX `FK_Dispositivo_Tipo_idx` (`ID_TipoDispositivo` ASC) VISIBLE,
-  INDEX `FK_Dispositivo_UsuarioGerente_idx` (`GerenciadoPor` ASC) VISIBLE,
-  CONSTRAINT `FK_Dispositivo_Fabricante`
-    FOREIGN KEY (`ID_Fabricante`)
-    REFERENCES `networkassetmanagerdb`.`fabricante` (`ID_Fabricante`)
-    ON DELETE SET NULL
-    ON UPDATE CASCADE,
-  CONSTRAINT `FK_Dispositivo_SO`
-    FOREIGN KEY (`ID_SistemaOperacional`)
-    REFERENCES `networkassetmanagerdb`.`sistemaoperacional` (`ID_SistemaOperacional`)
-    ON DELETE SET NULL
-    ON UPDATE CASCADE,
-  CONSTRAINT `FK_Dispositivo_Tipo`
-    FOREIGN KEY (`ID_TipoDispositivo`)
-    REFERENCES `networkassetmanagerdb`.`tipodispositivo` (`ID_TipoDispositivo`)
-    ON DELETE SET NULL
-    ON UPDATE CASCADE,
-  CONSTRAINT `FK_Dispositivo_UsuarioGerente`
-    FOREIGN KEY (`GerenciadoPor`)
-    REFERENCES `networkassetmanagerdb`.`usuario` (`ID_Usuario`)
-    ON DELETE SET NULL
-    ON UPDATE CASCADE)
-ENGINE = InnoDB
-AUTO_INCREMENT = 24
-DEFAULT CHARACTER SET = utf8mb4
-COLLATE = utf8mb4_unicode_ci
-COMMENT = 'Dispositivos inventariados na rede.';
-
-
--- -----------------------------------------------------
--- Table `networkassetmanagerdb`.`interfacerede`
--- -----------------------------------------------------
-CREATE TABLE IF NOT EXISTS `networkassetmanagerdb`.`interfacerede` (
-  `ID_Interface` INT NOT NULL AUTO_INCREMENT,
-  `ID_Dispositivo` INT NOT NULL,
-  `NomeInterface` VARCHAR(100) NULL DEFAULT NULL COMMENT 'Ex: eth0, wlan0, GigabitEthernet0/1',
-  `EnderecoMAC` VARCHAR(17) NOT NULL COMMENT 'Formato: XX:XX:XX:XX:XX:XX',
-  `ID_Fabricante_MAC` INT NULL DEFAULT NULL COMMENT 'Derivado do OUI do MAC',
-  `Ativa` TINYINT(1) NOT NULL DEFAULT '1',
-  PRIMARY KEY (`ID_Interface`),
-  UNIQUE INDEX `UQ_EnderecoMAC` (`EnderecoMAC` ASC) VISIBLE,
-  INDEX `FK_Interface_Dispositivo_idx` (`ID_Dispositivo` ASC) VISIBLE,
-  INDEX `FK_Interface_FabricanteMAC_idx` (`ID_Fabricante_MAC` ASC) VISIBLE,
-  CONSTRAINT `FK_Interface_Dispositivo`
-    FOREIGN KEY (`ID_Dispositivo`)
-    REFERENCES `networkassetmanagerdb`.`dispositivo` (`ID_Dispositivo`)
-    ON DELETE CASCADE
-    ON UPDATE CASCADE,
-  CONSTRAINT `FK_Interface_FabricanteMAC`
-    FOREIGN KEY (`ID_Fabricante_MAC`)
-    REFERENCES `networkassetmanagerdb`.`fabricante` (`ID_Fabricante`)
-    ON DELETE SET NULL
-    ON UPDATE CASCADE)
-ENGINE = InnoDB
-DEFAULT CHARACTER SET = utf8mb4
-COLLATE = utf8mb4_unicode_ci
-COMMENT = 'Interfaces de rede dos dispositivos.';
-
-
--- -----------------------------------------------------
--- Table `networkassetmanagerdb`.`rede`
--- -----------------------------------------------------
-CREATE TABLE IF NOT EXISTS `networkassetmanagerdb`.`rede` (
-  `ID_Rede` INT NOT NULL AUTO_INCREMENT,
-  `NomeRede` VARCHAR(100) NOT NULL,
-  `SubRedeCIDR` VARCHAR(45) NOT NULL COMMENT 'Ex: 192.168.1.0/24 ou 2001:db8::/32',
-  `GatewayPadrao` VARCHAR(45) NULL DEFAULT NULL,
-  `ServidorDNSPrimario` VARCHAR(45) NULL DEFAULT NULL,
-  `VLAN_ID` INT NULL DEFAULT NULL,
-  `Descricao` TEXT NULL DEFAULT NULL,
-  PRIMARY KEY (`ID_Rede`),
-  UNIQUE INDEX `UQ_NomeRede` (`NomeRede` ASC) VISIBLE,
-  UNIQUE INDEX `UQ_SubRedeCIDR` (`SubRedeCIDR` ASC) VISIBLE)
-ENGINE = InnoDB
-DEFAULT CHARACTER SET = utf8mb4
-COLLATE = utf8mb4_unicode_ci
-COMMENT = 'Informações sobre as redes/sub-redes gerenciadas.';
-
-
--- -----------------------------------------------------
--- Table `networkassetmanagerdb`.`enderecoip`
--- -----------------------------------------------------
-CREATE TABLE IF NOT EXISTS `networkassetmanagerdb`.`enderecoip` (
-  `ID_EnderecoIP` INT NOT NULL AUTO_INCREMENT,
-  `ID_Interface` INT NOT NULL,
-  `EnderecoIPValor` VARCHAR(45) NOT NULL COMMENT 'Armazena o endereço IPv4 ou IPv6',
-  `TipoIP` VARCHAR(4) NOT NULL COMMENT 'IPv4 ou IPv6',
-  `TipoAtribuicao` VARCHAR(10) NULL DEFAULT NULL COMMENT 'Estatico, DHCP',
-  `ID_Rede` INT NULL DEFAULT NULL,
-  `Principal` TINYINT(1) NOT NULL DEFAULT '0' COMMENT 'Indica se é o IP principal da interface',
-  `DataPrimeiraDeteccao` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  `DataUltimaDeteccao` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-  PRIMARY KEY (`ID_EnderecoIP`),
-  UNIQUE INDEX `UQ_Interface_IP` (`ID_Interface` ASC, `EnderecoIPValor` ASC) VISIBLE,
-  INDEX `FK_IP_Interface_idx` (`ID_Interface` ASC) VISIBLE,
-  INDEX `FK_IP_Rede_idx` (`ID_Rede` ASC) VISIBLE,
-  CONSTRAINT `FK_IP_Interface`
-    FOREIGN KEY (`ID_Interface`)
-    REFERENCES `networkassetmanagerdb`.`interfacerede` (`ID_Interface`)
-    ON DELETE CASCADE
-    ON UPDATE CASCADE,
-  CONSTRAINT `FK_IP_Rede`
-    FOREIGN KEY (`ID_Rede`)
-    REFERENCES `networkassetmanagerdb`.`rede` (`ID_Rede`)
-    ON DELETE SET NULL
-    ON UPDATE CASCADE)
-ENGINE = InnoDB
-DEFAULT CHARACTER SET = utf8mb4
-COLLATE = utf8mb4_unicode_ci
-COMMENT = 'Endereços IP associados às interfaces de rede.';
-
-
--- -----------------------------------------------------
--- Table `networkassetmanagerdb`.`ipsdescobertos`
--- -----------------------------------------------------
-CREATE TABLE IF NOT EXISTS `networkassetmanagerdb`.`ipsdescobertos` (
-  `ID_IPDescoberto` INT NOT NULL AUTO_INCREMENT,
-  `EnderecoIP` VARCHAR(45) NOT NULL,
-  `DataPrimeiraDeteccao` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  `DataUltimaDeteccao` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-  `StatusResolucao` VARCHAR(50) NOT NULL DEFAULT 'Novo' COMMENT 'Ex: Novo, Em_Analise, Inventariado, Ignorado',
-  `NomeHostResolvido` VARCHAR(255) NULL DEFAULT NULL,
-  `MAC_Address_Estimado` VARCHAR(17) NULL DEFAULT NULL,
-  `OS_Estimado` VARCHAR(255) NULL DEFAULT NULL,
-  `Portas_Abertas` TEXT NULL DEFAULT NULL,
-  `DetalhesVarreduraExtra` TEXT NULL DEFAULT NULL COMMENT 'Para armazenar outros detalhes do Nmap',
-  PRIMARY KEY (`ID_IPDescoberto`),
-  UNIQUE INDEX `UQ_EnderecoIPDescoberto` (`EnderecoIP` ASC) VISIBLE)
-ENGINE = InnoDB
-AUTO_INCREMENT = 14
-DEFAULT CHARACTER SET = utf8mb4
-COLLATE = utf8mb4_unicode_ci
-COMMENT = 'Armazena IPs detectados na rede que ainda não foram totalmente inventariados.';
-
-
--- -----------------------------------------------------
--- Table `networkassetmanagerdb`.`tipoalerta`
--- -----------------------------------------------------
-CREATE TABLE IF NOT EXISTS `networkassetmanagerdb`.`tipoalerta` (
-  `ID_TipoAlerta` INT NOT NULL AUTO_INCREMENT,
-  `Nome` VARCHAR(100) NOT NULL,
-  `Descricao` TEXT NULL DEFAULT NULL,
-  `SeveridadePadrao` VARCHAR(20) NOT NULL DEFAULT 'Media' COMMENT 'Baixa, Media, Alta, Critica',
-  PRIMARY KEY (`ID_TipoAlerta`),
-  UNIQUE INDEX `UQ_NomeTipoAlerta` (`Nome` ASC) VISIBLE)
-ENGINE = InnoDB
-AUTO_INCREMENT = 4
-DEFAULT CHARACTER SET = utf8mb4
-COLLATE = utf8mb4_unicode_ci
-COMMENT = 'Tipos de alertas que podem ser gerados pelo sistema.';
-
-
--- -----------------------------------------------------
--- Table `networkassetmanagerdb`.`alerta`
--- -----------------------------------------------------
-CREATE TABLE IF NOT EXISTS `networkassetmanagerdb`.`alerta` (
-  `ID_Alerta` INT NOT NULL AUTO_INCREMENT,
-  `ID_TipoAlerta` INT NOT NULL,
-  `ID_Dispositivo` INT NULL DEFAULT NULL,
-  `ID_IPDescoberto_FK` INT NULL DEFAULT NULL,
-  `ID_Interface` INT NULL DEFAULT NULL,
-  `ID_EnderecoIP` INT NULL DEFAULT NULL,
-  `DescricaoCustomizada` TEXT NULL DEFAULT NULL,
-  `DataHoraCriacao` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  `StatusAlerta` VARCHAR(20) NOT NULL DEFAULT 'Novo' COMMENT 'Novo, Em Investigacao, Resolvido, Ignorado',
-  `Severidade` VARCHAR(20) NOT NULL DEFAULT 'Media',
-  `DataHoraResolucao` TIMESTAMP NULL DEFAULT NULL,
-  `ID_UsuarioResponsavel` INT NULL DEFAULT NULL,
-  `DetalhesTecnicos` JSON NULL DEFAULT NULL COMMENT 'Dados brutos do evento gerador',
-  PRIMARY KEY (`ID_Alerta`),
-  INDEX `FK_Alerta_Tipo_idx` (`ID_TipoAlerta` ASC) VISIBLE,
-  INDEX `FK_Alerta_Dispositivo_idx` (`ID_Dispositivo` ASC) VISIBLE,
-  INDEX `FK_Alerta_Interface_idx` (`ID_Interface` ASC) VISIBLE,
-  INDEX `FK_Alerta_IP_idx` (`ID_EnderecoIP` ASC) VISIBLE,
-  INDEX `FK_Alerta_UsuarioResponsavel_idx` (`ID_UsuarioResponsavel` ASC) VISIBLE,
-  INDEX `FK_Alerta_IPDescoberto` (`ID_IPDescoberto_FK` ASC) VISIBLE,
-  CONSTRAINT `FK_Alerta_Dispositivo`
-    FOREIGN KEY (`ID_Dispositivo`)
-    REFERENCES `networkassetmanagerdb`.`dispositivo` (`ID_Dispositivo`)
-    ON DELETE SET NULL
-    ON UPDATE CASCADE,
-  CONSTRAINT `FK_Alerta_Interface`
-    FOREIGN KEY (`ID_Interface`)
-    REFERENCES `networkassetmanagerdb`.`interfacerede` (`ID_Interface`)
-    ON DELETE SET NULL
-    ON UPDATE CASCADE,
-  CONSTRAINT `FK_Alerta_IP`
-    FOREIGN KEY (`ID_EnderecoIP`)
-    REFERENCES `networkassetmanagerdb`.`enderecoip` (`ID_EnderecoIP`)
-    ON DELETE SET NULL
-    ON UPDATE CASCADE,
-  CONSTRAINT `FK_Alerta_IPDescoberto`
-    FOREIGN KEY (`ID_IPDescoberto_FK`)
-    REFERENCES `networkassetmanagerdb`.`ipsdescobertos` (`ID_IPDescoberto`)
-    ON DELETE SET NULL
-    ON UPDATE CASCADE,
-  CONSTRAINT `FK_Alerta_Tipo`
-    FOREIGN KEY (`ID_TipoAlerta`)
-    REFERENCES `networkassetmanagerdb`.`tipoalerta` (`ID_TipoAlerta`)
-    ON DELETE RESTRICT
-    ON UPDATE CASCADE,
-  CONSTRAINT `FK_Alerta_UsuarioResponsavel`
-    FOREIGN KEY (`ID_UsuarioResponsavel`)
-    REFERENCES `networkassetmanagerdb`.`usuario` (`ID_Usuario`)
-    ON DELETE SET NULL
-    ON UPDATE CASCADE)
-ENGINE = InnoDB
-AUTO_INCREMENT = 8
-DEFAULT CHARACTER SET = utf8mb4
-COLLATE = utf8mb4_unicode_ci
-COMMENT = 'Alertas gerados pelo sistema.';
-
-
--- -----------------------------------------------------
--- Table `networkassetmanagerdb`.`configuracaovarredura`
--- -----------------------------------------------------
-CREATE TABLE IF NOT EXISTS `networkassetmanagerdb`.`configuracaovarredura` (
-  `ID_ConfigVarredura` INT NOT NULL AUTO_INCREMENT,
-  `FaixasIP` TEXT NULL DEFAULT NULL COMMENT 'Faixas de IP a serem escaneadas, separadas por vírgula ou JSON',
-  `FrequenciaMinutos` INT NULL DEFAULT '60' COMMENT 'Frequência da varredura em minutos (ex: 60 para cada hora)',
-  `AgendamentoCron` VARCHAR(100) NULL DEFAULT NULL COMMENT 'Expressão CRON para agendamento avançado (opcional)',
-  `VarreduraAtivada` TINYINT(1) NOT NULL DEFAULT '0' COMMENT 'Se a varredura automática está ativada',
-  `DataUltimaModificacao` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-  PRIMARY KEY (`ID_ConfigVarredura`))
-ENGINE = InnoDB
-AUTO_INCREMENT = 2
-DEFAULT CHARACTER SET = utf8mb4
-COLLATE = utf8mb4_unicode_ci
-COMMENT = 'Armazena as configurações para a varredura automática de rede.';
-
-
--- -----------------------------------------------------
--- Table `networkassetmanagerdb`.`logauditoria`
--- -----------------------------------------------------
-CREATE TABLE IF NOT EXISTS `networkassetmanagerdb`.`logauditoria` (
-  `ID_Log` INT NOT NULL AUTO_INCREMENT,
-  `Timestamp` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  `ID_Usuario_FK` INT NULL DEFAULT NULL COMMENT 'ID do usuário que realizou a ação, se aplicável',
-  `NomeUsuario` VARCHAR(100) NULL DEFAULT NULL COMMENT 'Nome do usuário, para referência rápida',
-  `Acao` VARCHAR(255) NOT NULL COMMENT 'Ex: LOGIN_SUCESSO, ADD_DEVICE, UPDATE_DEVICE_SETTINGS, SCAN_STARTED',
-  `Detalhes` TEXT NULL DEFAULT NULL COMMENT 'Detalhes adicionais sobre a ação, ex: ID do dispositivo afetado, valores alterados (pode ser JSON)',
-  `EnderecoIPOrigem` VARCHAR(45) NULL DEFAULT NULL COMMENT 'IP de onde a ação foi originada, se aplicável (ex: da requisição HTTP)',
-  PRIMARY KEY (`ID_Log`),
-  INDEX `FK_LogAuditoria_Usuario_idx` (`ID_Usuario_FK` ASC) VISIBLE,
-  CONSTRAINT `FK_LogAuditoria_Usuario`
-    FOREIGN KEY (`ID_Usuario_FK`)
-    REFERENCES `networkassetmanagerdb`.`usuario` (`ID_Usuario`)
-    ON DELETE SET NULL
-    ON UPDATE CASCADE)
-ENGINE = InnoDB
-AUTO_INCREMENT = 17
-DEFAULT CHARACTER SET = utf8mb4
-COLLATE = utf8mb4_unicode_ci
-COMMENT = 'Registra eventos importantes e ações de usuários no sistema.';
-
-
--- -----------------------------------------------------
--- Table `networkassetmanagerdb`.`logstatusdispositivo`
--- -----------------------------------------------------
-CREATE TABLE IF NOT EXISTS `networkassetmanagerdb`.`logstatusdispositivo` (
-  `ID_LogStatus` INT NOT NULL AUTO_INCREMENT,
-  `ID_Dispositivo` INT NOT NULL,
-  `StatusAnterior` VARCHAR(50) NULL DEFAULT NULL,
-  `StatusNovo` VARCHAR(50) NOT NULL,
-  `DataHoraMudanca` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  `FonteMudanca` VARCHAR(100) NULL DEFAULT NULL COMMENT 'Ex: Varredura Automática, Edição Manual',
-  `Detalhes` TEXT NULL DEFAULT NULL,
-  PRIMARY KEY (`ID_LogStatus`),
-  INDEX `FK_LogStatus_Dispositivo_idx` (`ID_Dispositivo` ASC) VISIBLE,
-  CONSTRAINT `FK_LogStatus_Dispositivo`
-    FOREIGN KEY (`ID_Dispositivo`)
-    REFERENCES `networkassetmanagerdb`.`dispositivo` (`ID_Dispositivo`)
-    ON DELETE CASCADE
-    ON UPDATE CASCADE)
-ENGINE = InnoDB
-DEFAULT CHARACTER SET = utf8mb4
-COLLATE = utf8mb4_unicode_ci
-COMMENT = 'Histórico de mudanças de status dos dispositivos.';
-
-
--- -----------------------------------------------------
--- Table `networkassetmanagerdb`.`notificacaoalerta`
--- -----------------------------------------------------
-CREATE TABLE IF NOT EXISTS `networkassetmanagerdb`.`notificacaoalerta` (
-  `ID_Notificacao` INT NOT NULL AUTO_INCREMENT,
-  `ID_Alerta` INT NOT NULL,
-  `ID_Usuario` INT NOT NULL COMMENT 'Usuário notificado',
-  `MetodoNotificacao` VARCHAR(50) NOT NULL COMMENT 'Ex: Email, Sistema, SMS',
-  `DataHoraEnvio` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  `StatusEnvio` VARCHAR(20) NOT NULL COMMENT 'Enviado, Falhou, Lido',
-  PRIMARY KEY (`ID_Notificacao`),
-  INDEX `FK_Notificacao_Alerta_idx` (`ID_Alerta` ASC) VISIBLE,
-  INDEX `FK_Notificacao_Usuario_idx` (`ID_Usuario` ASC) VISIBLE,
-  CONSTRAINT `FK_Notificacao_Alerta`
-    FOREIGN KEY (`ID_Alerta`)
-    REFERENCES `networkassetmanagerdb`.`alerta` (`ID_Alerta`)
-    ON DELETE CASCADE
-    ON UPDATE CASCADE,
-  CONSTRAINT `FK_Notificacao_Usuario`
-    FOREIGN KEY (`ID_Usuario`)
-    REFERENCES `networkassetmanagerdb`.`usuario` (`ID_Usuario`)
-    ON DELETE CASCADE
-    ON UPDATE CASCADE)
-ENGINE = InnoDB
-DEFAULT CHARACTER SET = utf8mb4
-COLLATE = utf8mb4_unicode_ci
-COMMENT = 'Registros de notificações enviadas para usuários sobre alertas.';
-
-
-SET SQL_MODE=@OLD_SQL_MODE;
-SET FOREIGN_KEY_CHECKS=@OLD_FOREIGN_KEY_CHECKS;
-SET UNIQUE_CHECKS=@OLD_UNIQUE_CHECKS;
-```
 para criar todas as tabelas (`Usuario`, `PerfilUsuario`, `Dispositivo`, `IPsDescobertos`, `Alerta`, `ConfiguracaoVarredura`, etc.).
         * Popule tabelas de lookup como `TipoAlerta`, `PerfilUsuario` com dados iniciais.
     * Rode o servidor Flask (ainda dentro da pasta `backend` com `venv` ativo):
