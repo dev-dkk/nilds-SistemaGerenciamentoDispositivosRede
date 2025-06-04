@@ -1,0 +1,8 @@
+Flask
+Flask-CORS
+python-dotenv
+mysql-connector-python
+bcrypt
+python-nmap
+APScheduler
+PyJWT
