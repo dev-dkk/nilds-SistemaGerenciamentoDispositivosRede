@@ -1,4 +1,4 @@
-# Sistema de Gerenciamento de Dispositivos em Rede (Network Asset Manager - NAM)
+# NILDS - Sistema de Gerenciamento de Dispositivos em Redes
 
 ## Descrição
 
