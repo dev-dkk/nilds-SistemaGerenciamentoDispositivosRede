@@ -11,7 +11,7 @@ document.addEventListener('DOMContentLoaded', function() {
         const password = passwordInput.value.trim();
 
         messageDiv.textContent = '';
-        messageDiv.className = 'login-message-placeholder'; 
+        messageDiv.className = 'login-message-placeholder';
 
         if (!username || !password) {
             messageDiv.textContent = 'Por favor, preencha o usuário e a senha.';
@@ -31,17 +31,25 @@ document.addEventListener('DOMContentLoaded', function() {
                 })
             });
 
-            const data = await response.json(); 
+            const data = await response.json();
 
-            if (response.ok) { 
+            if (response.ok && data.token) { // SUCESSO E TOKEN EXISTE
                 messageDiv.textContent = data.message || 'Login bem-sucedido! Redirecionando...';
                 messageDiv.classList.add('success-message');
 
-                setTimeout(function() {
-                    window.location.href = 'index.html'; 
-                }, 1000); 
+                // ---- LÓGICA ADICIONADA ----
+                // 1. Salva o token no localStorage do navegador
+                localStorage.setItem('authToken', data.token);
+                console.log('Token salvo no localStorage:', data.token);
+                // -----------------------------
 
-            } else {
+                // 2. Redireciona para a página principal após 1 segundo
+                setTimeout(function() {
+                    window.location.href = 'index.html';
+                }, 1000);
+
+            } else { // FALHA
+                // Se a resposta não for OK ou não contiver um token
                 messageDiv.textContent = data.message || 'Falha no login. Verifique suas credenciais.';
                 messageDiv.classList.add('error-message');
             }
