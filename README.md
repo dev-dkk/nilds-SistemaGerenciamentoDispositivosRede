@@ -577,6 +577,89 @@ para criar todas as tabelas (`Usuario`, `PerfilUsuario`, `Dispositivo`, `IPsDesc
         ```
         O backend estará rodando em `http://127.0.0.1:5000`.
         *Nota: Para testes consistentes do agendador APScheduler, pode ser útil rodar com `app.run(debug=True, use_reloader=False)` no final do `app.py`.*
+    *Rode os seguintes comandos no Workbench para adicionar itens necessários ao banco de dados
+        ´´´bash
+          -- ----------------------------------------------
+          -- 1. Tabela PerfilUsuario
+          -- Para definir os papéis básicos dos usuários:
+          -- ----------------------------------------------
+          INSERT INTO PerfilUsuario (NomePerfil, Descricao) VALUES ('Administrador', 'Acesso total ao sistema');
+          INSERT INTO PerfilUsuario (NomePerfil, Descricao) VALUES ('Operador', 'Acesso para operações diárias e monitoramento');
+          INSERT INTO PerfilUsuario (NomePerfil, Descricao) VALUES ('Visualizador', 'Acesso apenas para visualização de dados');
+
+          -- -----------------------------------------------------------
+          -- 2. Tabela TipoAlerta
+          -- Para definir os tipos de alertas que o sistema pode gerar:
+          -- -----------------------------------------------------------
+
+          INSERT INTO TipoAlerta (Nome, Descricao, SeveridadePadrao) 
+          SELECT * FROM (SELECT 'Novo IP Descoberto' AS Nome, 'Um novo endereço IP foi detectado na rede e adicionado à lista de descobertas.' AS Descricao, 'Media' AS SeveridadePadrao) AS tmp
+          WHERE NOT EXISTS (SELECT Nome FROM TipoAlerta WHERE Nome = 'Novo IP Descoberto') LIMIT 1;
+
+          INSERT INTO TipoAlerta (Nome, Descricao, SeveridadePadrao) 
+          SELECT * FROM (SELECT 'Dispositivo Offline' AS Nome, 'Um dispositivo do inventário principal ficou offline.' AS Descricao, 'Alta' AS SeveridadePadrao) AS tmp
+          WHERE NOT EXISTS (SELECT Nome FROM TipoAlerta WHERE Nome = 'Dispositivo Offline') LIMIT 1;
+
+          INSERT INTO TipoAlerta (Nome, Descricao, SeveridadePadrao) 
+          SELECT * FROM (SELECT 'Dispositivo Online' AS Nome, 'Um dispositivo do inventário principal que estava offline voltou a ficar online.' AS Descricao, 'Informativo' AS SeveridadePadrao) AS tmp
+          WHERE NOT EXISTS (SELECT Nome FROM TipoAlerta WHERE Nome = 'Dispositivo Online') LIMIT 1;
+
+          -- -------------------------------------------------------------------------------------------------------------------------------------------
+          -- 3. Tabelas de Lookup para Dispositivo
+          -- Para popular as tabelas Fabricante, SistemaOperacional e TipoDispositivo com alguns exemplos (você pode adicionar mais conforme necessário):
+          -- ---------------------------------------------------------------------------------------------------------------------------------------------
+          -- Fabricante:
+          -- --------------------------------------------------------------------------------------------------------------------------------------------
+
+          INSERT INTO Fabricante (Nome) VALUES 
+          ('Dell'), ('HP'), ('Cisco'), ('Apple'), 
+          ('Samsung'), ('Intel'), ('TP-Link'), ('Desconhecido')
+          ON DUPLICATE KEY UPDATE Nome=Nome; -- Evita erro se já existir
+
+
+          SistemaOperacional:
+
+          INSERT INTO SistemaOperacional (Nome, Versao, Familia) VALUES 
+          ('Windows 10 Pro', '22H2', 'Windows'), 
+          ('Windows 11 Pro', '23H2', 'Windows'), 
+          ('Windows Server 2019', NULL, 'Windows'),
+          ('Ubuntu Desktop', '22.04 LTS', 'Linux'), 
+          ('Ubuntu Server', '20.04 LTS', 'Linux'), 
+          ('Debian', '12', 'Linux'),
+          ('macOS Sonoma', '14', 'macOS'), 
+          ('Android', '13', 'Android'), 
+          ('iOS', '17', 'iOS'),
+          ('RouterOS', '7.x', 'Outros'),
+          ('Desconhecido', NULL, 'Outros')
+          ON DUPLICATE KEY UPDATE Nome=Nome; -- Evita erro se já existir (assumindo UNIQUE(Nome, Versao))
+
+
+          TipoDispositivo:
+
+
+          INSERT INTO TipoDispositivo (Nome, Icone) VALUES 
+          ('Desktop', 'fas fa-desktop'), 
+          ('Notebook', 'fas fa-laptop'), 
+          ('Servidor', 'fas fa-server'), 
+          ('Roteador', 'fas fa-network-wired'), -- ou fas fa-route
+          ('Switch', 'fas fa-ethernet'),      -- ou fas fa-project-diagram
+          ('Impressora', 'fas fa-print'), 
+          ('Mobile', 'fas fa-mobile-alt'),
+          ('Tablet', 'fas fa-tablet-alt'),
+          ('Access Point', 'fas fa-wifi'),
+          ('Firewall', 'fas fa-shield-alt'),
+          ('Desconhecido', 'fas fa-question-circle')
+          ON DUPLICATE KEY UPDATE Nome=Nome;
+
+
+
+          4. Tabela ConfiguracaoVarredura (Registro Padrão)
+
+          INSERT INTO `ConfiguracaoVarredura` (`ID_ConfigVarredura`, `FaixasIP`, `FrequenciaMinutos`, `VarreduraAtivada`)
+          SELECT 1, '192.168.1.0/24', 60, FALSE
+          FROM DUAL
+          WHERE NOT EXISTS (SELECT * FROM `ConfiguracaoVarredura` WHERE `ID_ConfigVarredura` = 1);
+
 
 ## Como Usar (Principais Fluxos)
 
