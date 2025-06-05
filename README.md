@@ -578,15 +578,6 @@ para criar todas as tabelas (`Usuario`, `PerfilUsuario`, `Dispositivo`, `IPsDesc
         O backend estará rodando em `http://127.0.0.1:5000`.
         *Nota: Para testes consistentes do agendador APScheduler, pode ser útil rodar com `app.run(debug=True, use_reloader=False)` no final do `app.py`.*
 
-4.  **Executar o Frontend:**
-    * Abra os arquivos HTML localizados na pasta `pages` diretamente no seu navegador web (ex: `pages/login.html` ou `pages/index.html` após o login).
-    * Alternativamente, para uma melhor experiência e para evitar alguns problemas com `file:///` e CORS (embora o `Flask-CORS` no backend ajude), você pode servir a pasta raiz do projeto (`Prototipo Sistema Gerenciamento`) com um servidor HTTP simples:
-        ```bash
-        # Navegue para a pasta raiz Prototipo Sistema Gerenciamento
-        python -m http.server 8080 
-        ```
-        E então acesse `http://localhost:8080/pages/login.html`.
-
 ## Como Usar (Principais Fluxos)
 
 1.  **Login:** Acesse a página `login.html` e entre com um usuário cadastrado (após popular a tabela `Usuario` com senhas "hasheadas" usando o script `populate_user.py`).
